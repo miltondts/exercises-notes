@@ -23,7 +23,8 @@
   (- (revenue ticket-price)
      (cost ticket-price)))
 
-;exercise 28
+;exercise 28 - reviewed
+;The owner of the movie theater should charge 3 dollars a ticket to maximize his profit.
 (profit 1)
 (profit 2)
 (profit 3)
@@ -74,3 +75,6 @@
 (profit4 3)
 (profit4 4)
 (profit4 5)
+
+;exercise 30
+(define ATTENDANCE-SENSITIVITY (/ ATENDEE-SHIFT PRICE-SHIFT))
