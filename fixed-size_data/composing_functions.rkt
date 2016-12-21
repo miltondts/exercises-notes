@@ -23,8 +23,9 @@
   (- (revenue ticket-price)
      (cost ticket-price)))
 
-;exercise 28 - reviewed
+;exercise 28 - rereviewed
 ;The owner of the movie theater should charge 3 dollars a ticket to maximize his profit.
+;The profit will be 1063 dollars and 2 dimes
 (profit 1)
 (profit 2)
 (profit 3)

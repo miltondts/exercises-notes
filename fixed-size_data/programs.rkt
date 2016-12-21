@@ -43,7 +43,7 @@
 (main fst lst signature 'stdout)
 ;Result: The output seems fine.
 
-;excersise 32  -  this solution is still under construction
+;excersise 32 
 ;Assuming they are only refering to built-in bio computers 
 ;1) Heartbeats
 ;2) Pressure on the skin
@@ -55,3 +55,25 @@
 ;8) Taste
 ;9) Hydration 
 ;10) Sound
+
+;Studying the big-bang
+(require 2htdp/image)
+(require 2htdp/universe)
+
+(define (number->square s)
+  (square s "solid" "red"))
+
+(define (reset s ke)
+  100)
+
+;(big-bang 100 [to-draw number->square])
+(big-bang 100
+    [to-draw number->square]  ;render the image
+    [on-tick sub1]            ;everytime a clock ticks subtract 1 
+    [stop-when zero?]         ;check if it is 0 and, if not, continue
+    [on-key reset])           ;react to a key event with the reset function => The square will return to its original size everytime I press a key
+
+;Stop! How does big-bang display each of these three states?
+;render turns the current state into an image, the exact display will depend on how the input function deal with a given event
+;(e.g. if a user presses "a" a text editor should present/print "a" on the sheet)
+;In other words, after each event is processed, big-bang uses render to check the current state
