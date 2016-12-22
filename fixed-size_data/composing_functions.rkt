@@ -23,14 +23,24 @@
   (- (revenue ticket-price)
      (cost ticket-price)))
 
-;exercise 28 - rereviewed
-;The owner of the movie theater should charge 3 dollars a ticket to maximize his profit.
-;The profit will be 1063 dollars and 2 dimes
+;exercise 28 - rerereviewed
+;The owner of the movie theater should charge 2 dollars and 9 dimes a ticket to maximize his profit.
+;The profit will be 1064 dollars and 1 dimes
 (profit 1)
 (profit 2)
 (profit 3)
 (profit 4)
 (profit 5)
+;input: current ticket price with the maximum profit
+;logic:
+;iterate over profit, simoultaneously increase and decrease 0.1 from the current value with maximum profit (3)
+;if the value is larger than the profit with a 3 dollar ticket, change the reference to this new maximum
+;once the resulting profit values get lower than the maximum stop increasing/decresing the ticket price
+;output: the price and the maximum profit
+(profit 2.9)
+(profit 3.1)
+(profit 2.8)
+
 
 (define (profit2 price)
   (- (* (+ 120

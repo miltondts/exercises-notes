@@ -77,3 +77,33 @@
 ;render turns the current state into an image, the exact display will depend on how the input function deal with a given event
 ;(e.g. if a user presses "a" a text editor should present/print "a" on the sheet)
 ;In other words, after each event is processed, big-bang uses render to check the current state
+
+;Stop! Reformulate the first sequence of events as an expression
+;(define cw1 (ke-h cw0 "a"))
+;(define cw2 (tock cw1))
+;(define cw3 (me-h cw2 "button-down" 90 100))
+; => (me-h (tock (ke-h cw0 "a"))s "button-down" 90 100)xs
+
+;Figure 13. A first interactive program
+(define BACKGROUND (empty-scene 100 100))
+(define DOT (circle 3 "solid" "red"))
+ 
+(define (main2 y)
+  (big-bang y
+    [on-tick sub1]
+    [stop-when zero?]
+    [to-draw place-dot-at]
+    [on-key stop]))
+ 
+(define (place-dot-at y)
+  (place-image DOT 50 y BACKGROUND))
+ 
+(define (stop y ke)
+  0)
+
+;Stop! Try now to understand how main reacts when you press a key.
+; main subtracts 1 to y on every clock tick and updates the position of the dot (going up the window toward y=0)
+; when stop is pressed, the program stops and the dot remains in place
+(main2 90)
+
+;Take a breath
