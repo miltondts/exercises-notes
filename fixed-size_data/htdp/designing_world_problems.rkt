@@ -73,4 +73,56 @@
      [to-draw render]
      [stop-when end?]))
 
-(main 0)
+; Exercise 42 => not fully understood, need to be revisited
+; A WorldState is a Number.
+; interpretation the x-coordinate of the right-most edge of
+; the car
+
+; Exercise 43
+; An AnimationState is a Number.
+; interpretation the number of clock ticks 
+; since the animation started
+
+; Design the functions
+; WorldState -> WorldState 
+; the numver of clock ticks since the animation
+; started
+; examples:
+; given: 0, expect: 1
+; given: 20, expect: 21
+; given: 78, expect: 79
+(define (tock2 as)
+  (+ as 1))
+
+(check-expect (tock2 0) 1)
+(check-expect (tock2 20) 21)
+(check-expect (tock2 78) 79)
+
+; WorldState -> Image
+; places the car into the BACKGROUND scene,
+; according to the given world state 
+ (define (render2 as)
+   (place-image CAR as Y-CAR BACKGROUND))
+
+(check-expect (render2 50) (place-image CAR 50 Y-CAR BACKGROUND))
+(check-expect (render2 100) (place-image CAR 100 Y-CAR BACKGROUND))
+(check-expect (render2 150) (place-image CAR 150 Y-CAR BACKGROUND))
+(check-expect (render2 200) (place-image CAR 200 Y-CAR BACKGROUND))
+
+; Define the main function
+; WorldState -> WorldState
+; launches the program from some initial state
+(define (main2 as)
+   (big-bang as
+     [on-tick tock2]
+     [to-draw render2]))
+
+; Both this function and animate create a new image at every clock tick
+; in other words, in both cases the state of the world depends on the clock tick
+ (define (render3 as)
+   (place-image CAR as (+ (sin as) Y-CAR) BACKGROUND))
+
+(define (main3 as)
+   (big-bang as
+     [on-tick tock2]
+     [to-draw render3]))
