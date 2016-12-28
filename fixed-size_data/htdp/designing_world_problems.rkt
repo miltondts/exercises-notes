@@ -126,3 +126,35 @@
    (big-bang as
      [on-tick tock2]
      [to-draw render3]))
+
+; Exercise 44
+; WorldState Number Number String -> WorldState
+; places the car at the x-coordinate 
+; if the given me is "button-down"
+; given: 21 10 20 "enter"
+; wanted: 21
+; given: 42 10 20 "button-down"
+; wanted: 10
+; given: 42 10 20 "move"
+; wanted: 42
+(define (hyper x-coordinate x-mouse y-mouse me)
+  x-coordinate)
+
+(check-expect (hyper 21 10 20 "enter") 21)
+;(check-expect (hyper 42 10 20 "button-down")  10)
+(check-expect (hyper 42 10 20 "move") 42)
+
+(define (hyper2 x-position-of-car x-mouse y-mouse me)
+  (cond
+    [(string=? "button-down" me) x-mouse]
+    [else x-position-of-car]))
+
+(check-expect (hyper2 21 10 20 "enter") 21)
+(check-expect (hyper2 42 10 20 "button-down")  10)
+(check-expect (hyper2 42 10 20 "move") 42)
+
+(define (main4 as)
+   (big-bang as
+     [on-tick tock2]
+     [on-mouse hyper2]
+     [to-draw render2]))
