@@ -58,11 +58,12 @@
 ; when needed, big-bang evaluates (end? cw) to determine
 ; whether the program should stop
 (define (end? ws)
-  (= ws TRACK-LENGTH))
+  (>= ws TRACK-LENGTH))
 
 (check-expect (end? 0) #false)
 (check-expect (end? (* WHEEL-RADIUS 20)) #true)
 (check-expect (end? (* WHEEL-RADIUS 10)) #false)
+(check-expect (end? (+ 3 TRACK-LENGTH)) #true)
 
 ; Define the main function
 ; WorldState -> WorldState
