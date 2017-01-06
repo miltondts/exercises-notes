@@ -183,3 +183,58 @@
     [on-key launch]
     [on-tick fly2]
     [stop-when end2?]))
+;-------------------------------------------------------------------
+; Designing with itemizations
+; Stop! Try to calculate the tax for each of these prices.
+; 0 => 0
+; 537 => 0
+; 1000 => limit is not clear on the problem definition
+; 1282 => 64.1
+; 10000 => limit is not clear on the problem definition
+; 12017 => 961.63
+
+
+;Stop! Write down the remaining test cases. Think about why you may need more test cases than sub-classes in the data definition.
+;(check-expect (sales-tax 0) 0)
+;(check-expect (sales-tax 1282) (* 0.05 1282))
+;(check-expect (sales-tax 10000) (* 0.08 10000)
+
+; 1) Define the data
+; A Price falls into one of three intervals: 
+; — 0 through 1000
+; — 1000 through 10000
+; — 10000 and above.
+; interpretation the price of an item
+
+; 2) Write the function signature, purpose statement and header
+; Price -> Number
+; computes the amount of tax charged for p
+; (define (sales-tax p) 0)
+
+; 3) Specify examples. One for each interval limit and one within the interval
+(check-expect (sales-tax 0) 0)
+(check-expect (sales-tax 537) 0)
+(check-expect (sales-tax 1000) (* 0.05 1000))
+(check-expect (sales-tax 1282) (* 0.05 1282))
+(check-expect (sales-tax 10000) (* 0.08 10000))
+(check-expect (sales-tax 12017) (* 0.08 12017))
+
+; 4) Build the a conditional template
+; (define (sales-tax p)
+; (cond
+;   [(and (<= 0 p) (< p 1000)) ...]
+;   [(and (<= 1000 p) (< p 10000)) ...]
+;   [(>= p 10000) ...]))
+
+; 5) Define the function
+(define (sales-tax p)
+  (cond
+    [(and (<= 0 p) (< p LOW_LIMIT)) 0]
+    [(and (<= LOW_LIMIT p) (< p LUXURY_LIMIT)) (* 0.05 p)]
+    [(>= p LUXURY_LIMIT) (* 0.08 p)]))
+
+; 6) Run the tests and you're done
+
+; Exercise 58
+(define LOW_LIMIT 1000)
+(define LUXURY_LIMIT 10000)
