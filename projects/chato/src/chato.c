@@ -1,17 +1,69 @@
 #include <arpa/inet.h>
 #include <errno.h>
+#include <poll.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 typedef struct Users{
     char *alias;
     uint32_t ip;
     uint16_t port;
 } User;
+
+
+typedef struct CliFds {
+    struct pollfd *pfds;    /*array of pollfd*/
+    int poll_size;          /*maximum number of file descriptors*/
+    int poll_used;          /*number of used file descriptors*/
+} CliFds;
+
+CliFds* make_fds(unsigned int size) {
+    CliFds *ptr = malloc(sizeof(CliFds));
+    ptr->poll_size = size;
+    ptr->poll_used = 0;
+    ptr->pfds = malloc(size * sizeof(struct pollfd));
+
+    return ptr;
+}
+
+int insert(CliFds *ptr, int fd, short events) {
+    if (ptr->poll_used >= ptr->poll_size) {
+        return -1;
+    }
+
+    ptr->pfds[ptr->poll_used].fd = fd;
+    ptr->pfds[ptr->poll_used].events = events;
+    ptr->poll_used++;
+
+    return 0;
+}
+
+int make_server(uint32_t ip, uint16_t port)
+{
+    int sfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sfd < 0)
+        return sfd;
+
+    struct sockaddr_in addr;
+    memset(&addr, '\0', sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_port = htons(port);
+    if (bind(sfd, (struct sockaddr*) &addr, sizeof(addr)) < 0)
+        return -1;
+
+
+    if (listen(sfd, 0) < 0)
+        return -1;
+
+    return sfd;
+}
 
 int main(int argc, char *argv[])
 {
@@ -25,7 +77,7 @@ int main(int argc, char *argv[])
     user->alias = (char*) malloc(strlen(argv[1]));
     strcpy(user->alias, argv[1]);
     if(inet_pton(AF_INET, argv[2], &user->ip) <= 0) {
-        fprintf(stderr, "Invalid IP.\n");
+        fprintf(stderr, "Invalid IP. errno: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
@@ -45,22 +97,56 @@ int main(int argc, char *argv[])
 
     printf("Alias: %s\nIP: %s\nport: %u\n", user->alias, str, user->port);
     free(user);
-
-    return 0;
-}
-
-int make_server(uint32_t ip, uint16_t port)
-{
-    int sfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sfd < 0) {
-        fprintf(stderr, "%s:%d errno: %s\n", __FUNCTION__, __LINE__, strerror(errno));
+    int server_sfd = make_server(user->ip, user->port);
+    if (server_sfd < 0) {
+        fprintf(stderr, "Failed to get server socket. errno: %s\n", strerror(errno));
         exit(EXIT_FAILURE);
     }
 
-    struct sockaddr_in addr;
-    memset(&addr, '\0', sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = INADDR_ANY;
-    addr.sin_port = htons(port);
+    //TODO: Switch with make_fds and insert
+    // The structure for two events
+    struct pollfd fds[2];
+    // Monitor sock1 for input
+    fds[0].fd = server_sfd;
+    fds[0].events = POLLIN;
+
+    // Monitor sock2 for input
+    fds[1].fd = STDIN_FILENO;
+    fds[1].events = POLLIN;
+
+    while(1) {
+
+
+        // Wait 10 seconds
+        int ret = poll(fds, 2, 10000);
+        // Check if poll actually succeded
+        if (ret < 0) {
+            fprintf(stderr, "Failed to poll. errno: %s\n", strerror(errno));
+            exit(EXIT_FAILURE);
+        } else if (ret == 0) {
+            fprintf(stdout, "Poll timed out.\n");
+        } else {
+            if (fds[0].revents & POLLIN) {
+                fds[0].revents = 0;
+                struct sockaddr cli_addr;
+                socklen_t cli_len;
+
+                int cli_sfd = accept(server_sfd, &cli_addr, &cli_len);
+                if (cli_sfd < 0)
+                    fprintf(stderr, "Failed to accept. errno: %s\n", strerror(errno));
+
+                fprintf(stdout, "cli_sfd= %d\n", cli_sfd);
+            }
+
+            if (fds[1].revents & POLLIN) {
+                fds[1].revents = 0;
+                char buf[255];
+                read(STDIN_FILENO, buf, sizeof(buf));
+                fprintf(stdout, "read from stdin: %s\n", buf);
+            }
+        }
+    }
+
+    return 0;
 }
 
