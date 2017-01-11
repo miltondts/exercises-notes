@@ -47,5 +47,5 @@
 (make-balld 22 "down")
 
 ; Exercise 68
-(define-struct ballf [x y deltax deltay])
+(define-struct ballf [x y deltax deltay]) ;  flat representation
 (make-ballf 30 40 -10 5)

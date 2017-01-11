@@ -15,11 +15,29 @@
 
 ; Exercise 63
 (distance-to-0 (make-posn 3 4))          ; == 5
+; substitutes distance-to-0 by its definition
+; substitutes posn-x by its value and calculates its square
+; does the same for y
+; adds the squares of x and y
+; performs the sqrt of the result
 (distance-to-0 (make-posn 6 (* 2 4)))    ; == 10
+; multiplies 2 by 4 and uses this value as y
+; substitutes distance-to-0 by its definition
+; substitutes posn-x by its value and calculates its square
+; does the same for y
+; adds the squares of x and y
+; performs the sqrt of the result
 (+ (distance-to-0 (make-posn 12 5)) 10)  ; == 23
+; substitutes distance-to-0 by its definition
+; substitutes posn-x by its value and calculates its square
+; does the same for y
+; adds the squares of x and y
+; performs the sqrt of the result
+; adds 10 with to the previous result
 
 ; Exercise 64
 ; Stop! Does it matter which strategy you follow?
 ; No, because both will convey the same amount of steps
+(define (manhattan-distance x y) (+ x y))
 
 
