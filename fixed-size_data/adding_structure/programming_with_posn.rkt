@@ -38,6 +38,5 @@
 ; Exercise 64
 ; Stop! Does it matter which strategy you follow?
 ; No, because both will convey the same amount of steps
-(define (manhattan-distance x y) (+ x y))
-
-
+(check-expect (manhattan-distance (make-posn 5 4)) 9)
+(define (manhattan-distance ap) (+ (posn-x ap) (posn-y ap)))
