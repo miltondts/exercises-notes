@@ -44,3 +44,46 @@
 ; - each character is a letter
 ; - each character is lower case
 ; - return false if any of the previous conditions fail
+
+; ------------------------------------------------------------------------------
+; Exercise 79 - STILL NOT FINISHED
+; A Color is one of:
+; — "white"	; — "yellow"	; — "orange"	; — "green"
+; — "red"	; — "blue"	; — "black"
+
+(define WHITE "white")
+(define YELLOW "yellow")
+(define BLUE "blue")
+
+; H is a Number between 0 and 100.
+; interpretation represents a “happiness value”
+(define HAPPY 100)
+(define MISERABLE 0)
+(define MNHE 50)
+
+(define-struct person [fstname lstname male?])
+; A Person is a structure:
+;   (make-person String String Boolean)
+(define HULK (make-person "Bruce" "Banner" #true))
+(define SPIDERMAN (make-person "Peter" "Parker" #true))
+(define MSMARVEL (make-person "Kalia" "Khan" #false))
+(define SHAGGY (make-person "Shaggy" "Doo" #true))
+
+; Is it a good idea to use a field name that looks like the name of a predicate?
+; Yes, because having the field as predicate clearly shows it as a boolean
+
+(define-struct dog [owner name age happiness])
+; A Dog is a structure:
+;   (make-dog Person String PositiveInteger H)
+; interpretation represents a dog with a given
+; owner
+; name
+; age
+; happiness level
+(define SCOOBY (make-dog SHAGGY "Scooby" 7 HAPPY))
+
+; A Weapon is one of:
+; — #false
+; — Posn
+; interpretation #false means the missile hasn't
+; been fired yet; a Posn means it is in flight
