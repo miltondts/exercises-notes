@@ -10,6 +10,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#define     MAX_CONNECTIONS     8       /* Maximum number of connections */
+#define     MAX_STRLEN          255     /* Maximum string length */
+#define     TIMEOUT             10000   /* Connection timeout in miliseconds*/
+
 typedef struct Users{
     char *alias;
     uint32_t ip;
@@ -103,22 +107,12 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    //TODO: Switch with make_fds and insert
-    // The structure for two events
-    struct pollfd fds[2];
-    // Monitor sock1 for input
-    fds[0].fd = server_sfd;
-    fds[0].events = POLLIN;
-
-    // Monitor sock2 for input
-    fds[1].fd = STDIN_FILENO;
-    fds[1].events = POLLIN;
-
+    CliFds *ptr = make_fds(MAX_CONNECTIONS);
+    insert(ptr, STDIN_FILENO, POLLIN);
+    insert(ptr, server_sfd, POLLIN);
     while(1) {
-
-
         // Wait 10 seconds
-        int ret = poll(fds, 2, 10000);
+        int ret = poll(ptr->pfds, ptr->poll_used, TIMEOUT);
         // Check if poll actually succeded
         if (ret < 0) {
             fprintf(stderr, "Failed to poll. errno: %s\n", strerror(errno));
@@ -126,8 +120,15 @@ int main(int argc, char *argv[])
         } else if (ret == 0) {
             fprintf(stdout, "Poll timed out.\n");
         } else {
-            if (fds[0].revents & POLLIN) {
-                fds[0].revents = 0;
+            if (ptr->pfds[0].revents & POLLIN) {
+                ptr->pfds[0].revents = 0;
+                char buf[255];
+                read(STDIN_FILENO, buf, sizeof(buf));
+                fprintf(stdout, "read from stdin: %s\n", buf);
+            }
+
+            if (ptr->pfds[1].revents & POLLIN) {
+                ptr->pfds[1].revents = 0;
                 struct sockaddr cli_addr;
                 socklen_t cli_len;
 
@@ -136,13 +137,6 @@ int main(int argc, char *argv[])
                     fprintf(stderr, "Failed to accept. errno: %s\n", strerror(errno));
 
                 fprintf(stdout, "cli_sfd= %d\n", cli_sfd);
-            }
-
-            if (fds[1].revents & POLLIN) {
-                fds[1].revents = 0;
-                char buf[255];
-                read(STDIN_FILENO, buf, sizeof(buf));
-                fprintf(stdout, "read from stdin: %s\n", buf);
             }
         }
     }
