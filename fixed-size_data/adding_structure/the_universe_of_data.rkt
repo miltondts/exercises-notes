@@ -82,8 +82,11 @@
 ; happiness level
 (define SCOOBY (make-dog SHAGGY "Scooby" 7 HAPPY))
 
+(define-struct weapon [fired position])
 ; A Weapon is one of:
 ; — #false
 ; — Posn
 ; interpretation #false means the missile hasn't
 ; been fired yet; a Posn means it is in flight
+(define GROUNDED (make-weapon #false (make-posn 0 0)))
+(define MID-LAUNCH (make-weapon #true (make-posn 0 5)))
