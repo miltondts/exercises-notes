@@ -20,7 +20,6 @@ typedef struct Users{
     uint16_t port;
 } User;
 
-
 typedef struct CliFds {
     struct pollfd *pfds;    /*array of pollfd*/
     int poll_size;          /*maximum number of file descriptors*/
@@ -136,7 +135,17 @@ int main(int argc, char *argv[])
                 if (cli_sfd < 0)
                     fprintf(stderr, "Failed to accept. errno: %s\n", strerror(errno));
 
+                insert(ptr, cli_sfd, POLLIN);
                 fprintf(stdout, "cli_sfd= %d\n", cli_sfd);
+            }
+
+            for (int i = 2; i <= ptr->poll_used; i++) {
+                if (ptr->pfds[i].revents & POLLIN) {
+                    ptr->pfds[i].revents = 0;
+                    char buf[255];
+                    read(ptr->pfds[i].fd, buf, sizeof(buf));
+                    fprintf(stdout, "read from client: %s\n", buf);
+                }
             }
         }
     }
