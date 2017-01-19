@@ -11,18 +11,18 @@
 ; Exercise 83
 (require 2htdp/image)
 
-(define BKGN (empty-scene 200 20))
+(define CANVAS (empty-scene 200 20))
 (define CURSOR (rectangle 1 20 "solid" "red"))
-(define FONT-SIZE 11)
+(define FONT-SIZE 16)
 (define FONT-COLOR "black")
 
 (define ex1 (make-editor "hello " "world"))
 
 (check-expect (render ex1) (overlay/align "left" "center"
                                            (beside
-                                            (text "hello " 11 "black")
+                                            (text "hello " 16 "black")
                                             CURSOR
-                                            (text "world" 11 "black"))
+                                            (text "world" 16 "black"))
                                           (empty-scene 200 20)))
 
 ; Editor -> Image
@@ -33,7 +33,7 @@
                   (text (editor-pre ed) FONT-SIZE FONT-COLOR)
                   CURSOR
                   (text (editor-post ed) FONT-SIZE FONT-COLOR))
-                 BKGN))
+                 CANVAS))
 
 ; ------------------------------------------------------------------------------
 ; Exercise 84
@@ -135,3 +135,86 @@
             (string-append (editor-pre ed) (string-first (editor-post ed))) (string-rest (editor-post ed)))]
      )]
     ))
+
+; ------------------------------------------------------------------------------
+; Exercise 85
+(require 2htdp/universe)
+
+(define (run str)
+  (big-bang (make-editor str "")
+    [to-draw render]
+    [on-key edit]))
+
+; ------------------------------------------------------------------------------
+; Exercise 86
+(define (re-edit ed ke)
+  (cond
+    [(string=? "\b" ke)
+     (cond
+     [(= (string-length (editor-pre ed)) 0) ed]
+     [else (make-editor (string-remove-last (editor-pre ed)) (editor-post ed))]
+     )]
+    [(string=? "left" ke)
+     (cond
+     [(= (string-length (editor-pre ed)) 0) ed]
+     [else (make-editor
+            (string-remove-last (editor-pre ed)) (string-append (string-last (editor-pre ed)) (editor-post ed)))]
+     )]
+     [(>= (image-width (text (editor-pre ed) FONT-SIZE FONT-COLOR)) (image-width CANVAS)) ed]
+     [(string=? "right" ke)
+     (cond
+     [(= (string-length (editor-post ed)) 0) ed]
+     [else (make-editor
+            (string-append (editor-pre ed) (string-first (editor-post ed))) (string-rest (editor-post ed)))]
+     )]
+     [(= (string-length ke) 1)
+     (make-editor (string-append (editor-pre ed) ke) (editor-post ed))]
+    ))
+
+(define (re-run str)
+  (big-bang (make-editor str "")
+    [to-draw render]
+    [on-key re-edit]))
+
+; ------------------------------------------------------------------------------
+; Exercise 87
+; An Editor is a structure:
+;   (make-editor String Number)
+; interpretation (make-editor str index) describes an editor where the entire text
+; entered is str and index is the number of characters between the first
+; character and the cursor
+
+(define-struct editor2 [str index])
+
+(define (string-delete str i) (string-append (substring str 0 i) (substring str (+ i 1))))
+
+(define example1 (make-editor2 "hello world" 6))
+(check-expect (render2 example1) (overlay/align "left" "center"
+                                           (beside
+                                            (text "hello " 16 "black")
+                                            CURSOR
+                                            (text "world" 16 "black"))
+                                          (empty-scene 200 20)))
+; Editor -> Image
+; Render the text within an empty scene
+(define (render2 ed)
+  (overlay/align "left" "center"
+                 (beside
+                  (text (substring (editor2-str ed) 0 (editor2-index ed)) FONT-SIZE FONT-COLOR)
+                  CURSOR
+                  (text (substring (editor2-str ed) (editor2-index ed)) FONT-SIZE FONT-COLOR))
+                 CANVAS))
+
+;(define example2 (make-editor2 "santiago" 8))
+;(define example3 (make-editor2 "super" 1))
+;(check-expect (edit2 example2 "\b") (make-editor2 "santiag" 7))
+;(check-expect (edit2 example3 "\b") (make-editor2 "uper" 0))
+
+; Editor KeyEvent -> Editor
+; Performs 2 operations:
+; - adds a single character KeyEvent to the end of the pre field;
+; - deletes the character imediatly to the left of the cursor in case of
+; backspace;
+; - moves the cursor sideways when ke is "left" or "right;
+; And ignores the tab and return characters
+;(define (edit2 ed ke))
