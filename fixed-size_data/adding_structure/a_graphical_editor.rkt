@@ -186,7 +186,11 @@
 
 (define-struct editor2 [str index])
 
-(define (string-delete str i) (string-append (substring str 0 i) (substring str (+ i 1))))
+(define (string-delete str i)
+  (string-append (substring str 0 i) (substring str (+ i 1))))
+
+(define (string-insert str i c)
+  (string-append (substring str 0 i) c (substring str i)))
 
 (define example1 (make-editor2 "hello world" 6))
 (check-expect (render2 example1) (overlay/align "left" "center"
@@ -205,10 +209,22 @@
                   (text (substring (editor2-str ed) (editor2-index ed)) FONT-SIZE FONT-COLOR))
                  CANVAS))
 
-;(define example2 (make-editor2 "santiago" 8))
-;(define example3 (make-editor2 "super" 1))
-;(check-expect (edit2 example2 "\b") (make-editor2 "santiag" 7))
-;(check-expect (edit2 example3 "\b") (make-editor2 "uper" 0))
+(define example2 (make-editor2 "super" 5))
+(define example3 (make-editor2 "super" 1))
+(define example4 (make-editor2 "super" 0))
+
+(check-expect (edit2 example2 "\b") (make-editor2 "supe" 4))
+(check-expect (edit2 example3 "\b") (make-editor2 "uper" 0))
+(check-expect (edit2 example4 "\b") (make-editor2 "super" 0))
+(check-expect (edit2 example2 "h") (make-editor2 "superh" 6))
+(check-expect (edit2 example3 "j") (make-editor2 "sjuper" 2))
+(check-expect (edit2 example4 "k") (make-editor2 "ksuper" 1))
+(check-expect (edit2 example2 "left") (make-editor2 "super" 4))
+(check-expect (edit2 example3 "left") (make-editor2 "super" 0))
+(check-expect (edit2 example4 "left") (make-editor2 "super" 0))
+(check-expect (edit2 example2 "right") (make-editor2 "super" 5))
+(check-expect (edit2 example3 "right") (make-editor2 "super" 2))
+(check-expect (edit2 example4 "right") (make-editor2 "super" 1))
 
 ; Editor KeyEvent -> Editor
 ; Performs 2 operations:
@@ -218,3 +234,32 @@
 ; - moves the cursor sideways when ke is "left" or "right;
 ; And ignores the tab and return characters
 ;(define (edit2 ed ke))
+(define (edit2 ed ke)
+  (cond
+    [(string=? "\b" ke)
+     (cond
+     [(= (editor2-index ed) 0) ed]
+     [else (make-editor2
+            (string-delete (editor2-str ed) (- (editor2-index ed) 1))
+            (- (editor2-index ed) 1))]
+     )]
+     [(string=? "left" ke)
+     (cond
+     [(= (editor2-index ed) 0) ed]
+     [else
+      (make-editor2 (editor2-str ed) (- (editor2-index ed) 1))]
+     )]
+     [(>= (image-width (text (editor2-str ed) FONT-SIZE FONT-COLOR)) (image-width CANVAS)) ed]
+     [(= (string-length ke) 1)
+     (make-editor2 (string-insert (editor2-str ed) (editor2-index ed) ke) (+ (editor2-index ed) 1))]
+     [(string=? "right" ke)
+     (cond
+     [(= (editor2-index ed) (string-length (editor2-str ed))) ed]
+     [else (make-editor2 (editor2-str ed) (+ (editor2-index ed) 1))]
+     )]
+    ))
+
+(define (run2 str)
+  (big-bang (make-editor2 str (string-length str))
+    [to-draw render2]
+    [on-key edit2]))
