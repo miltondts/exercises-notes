@@ -1,0 +1,6 @@
+Minimum viable game: 
+The game should present 1 player, a ball, 1 side of the scoreboard and the net. 
+The player should move up and down the canvas, restricted by the edges of the canvas.
+The ball should always be in motion, moving in the x axis in the opposite direction of the player, changing y direction when interacting with the upper edges of the canvas or with the player. 
+The score board should be updated once the ball passes the edge opposite to the player.
+The ball should be placed close to the player and launched again once a goal is scored. 

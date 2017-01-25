@@ -1,0 +1,11 @@
+HARDWARE:
+The hardware requirements for this case are a monitor (the monitor’s size will limit the maximum size of the canvas) and a keyboard should possess the “up”, “down”, “w” and “s” keys.
+If the computer used for development supports drRacket then in must also support the implicit CPU and graphics board requirements.
+
+SOFTWARE:
+BSL’s “2htdp/image” library can support the creation of the field, players, ball, net and score. The field will be an empty-scene, the players’ rectangles, the ball a square, the net will be a line with a pen structure and the score will be text.
+
+The “2htdp/universe” library will be used to deal with events:
+on-tick will be used to update the ball’s position with the progression of time.
+on-key will be used to update the player cursors when a key is pressed.
+to-draw will be used to render each actor’s current state. 

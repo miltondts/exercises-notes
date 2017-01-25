@@ -120,6 +120,8 @@
      [(= (string-length (editor-pre ed)) 0) ed]
      [else (make-editor (string-remove-last (editor-pre ed)) (editor-post ed))]
      )]
+    [(string=? "\t" ke) ed]
+    [(string=? "\r" ke) ed]
     [(= (string-length ke) 1)
      (make-editor (string-append (editor-pre ed) ke) (editor-post ed))]
     [(string=? "left" ke)

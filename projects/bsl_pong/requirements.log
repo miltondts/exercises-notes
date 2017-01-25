@@ -1,0 +1,31 @@
+Problem statement: Design the game Pong using BSL
+
+Problem specification:
+
+Pong is a 2-D game comprised of 2 players, a ball, a net and a scoreboard.
+
+The ball moves from one side of the canvas to the other in a diagonal trajectory.
+
+Hitting a player occurs when the ball touches a player cursor’s edges or when it intersects a player. 
+
+The ball changes direction in 2 situations. When the ball hits a player it turns back, changes direction in the x axis, and when it hits the upper, or lower, edge of the canvas it changes direction in the y axis. Depending on which side of the player the ball hits, the ball might continue in the same y trajectory or invert it (this decision is up to the developer).
+
+The ball should start of at a speed of 3 pixels per clock tick and increase speed as the game progresses.
+
+A goal occurs when the ball completly overcomes the left and right edges of the canvas, not having been intersected by one of the players.
+
+After a goal occurs, the ball is “launched” close to the player of the side where the goal was scored. “Launched” meaning it starts the trajectory in the direction opposite to the player. At a later stage, the ball should only be launched when the player that suffered the goal presses the space bar.
+
+If multiple keys are not supported, the game should be 1 player vs AI (scenario 1). Being that in a first iteration AI will simply go up and down the canvas, and in the following iteration it will react to the ball’s position. If drRacket supports simultaneous key presses, the game should have 2 players (scenario 2). On the long term, the game can provide a combination of both, letting the user chose at the beginning of the universe.
+
+Considering scenario 1, if the user presses the “up” key the player cursor of the right side of the canvas should go up (decrease the distance between the top of the canvas and the center of the cursor). Once the cursor’s top edge reaches the top edge of the canvas the motion stops and going up is no longer possibl
+
+If the user presses the “down” key, the player cursor on the right side of the canvas should go down the canvas (increase the distance between the center of the cursor and the top of the canvas). The lower edge of the cursor should not be able to overcome the lower edge of the canvas.
+
+In scenario 2, player 2 is the player on the right edge of the canvas and keeps the motion specified in scenario 1 while player 1 is place on the left edge of the canvas and should have the same behaviour only but react to “w” instead of “up” and “s” instead of "down".
+
+The net is a static dotted line dividing the canvas and does not change during the game. The ball does not interact with the net.
+
+The canvas, hereby represented as the pong field, should have a rectangular shape and its width should be larger or equal than twice it’s height.
+
+The scoreboard consists of two numbers, placed close to the top of the pong field, separated of equal distance from the net. The scoreboard does not interact with the ball. Each number of the scoreboard is updated once the player on that side scores a goal.
