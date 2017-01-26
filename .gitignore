@@ -1,2 +1,2 @@
 *.rkt~
-*.txt
+/fixed-size_data/*.txt
