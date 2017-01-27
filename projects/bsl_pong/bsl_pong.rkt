@@ -18,25 +18,24 @@
 (define PLAYER-WIDTH (/ FIELD-WIDTH 80))
 (define PLAYER-SPEED 3)
 (define PLAYER (rectangle PLAYER-WIDTH PLAYER-HEIGHT "solid" "black"))
+(define BALL-HEIGHT 3)
+(define BALL (square BALL-HEIGHT "solid" "black"))
 (define FIELD (add-line CANVAS (/ FIELD-WIDTH 2) 0 (/ FIELD-WIDTH 2) FIELD-HEIGHT (pen "black" PLAYER-WIDTH "short-dash" "butt" "bevel")))
+
 
 (define-struct player [pos score])
 ; Player is a structure
-; (make-player Posn Number Score)
+; (make-player Posn Number)
 ; interpretation information regarding a player. pos stores the x and y
 ; coordinates of where the player is, dir is the direction (-1 if going up,
 ; 1 if going down) the player is heading and score is a non negative number,
 ; starting at 0, that represents the player's score
 
-(define-struct ball [pos vel])
-; Ball is a structure
-; (make-ball Posn Number)
-; interpretation pos represents where the ball is (it's x and y coordinates)
-; and vel is an Integer for the direction and speed of the ball
 
 (define example1 (make-player (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (/ FIELD-HEIGHT 2)) 0))
 (define example2 (make-player (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) 0) 0))
 (define example3 (make-player (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) FIELD-HEIGHT) 0))
+(define example4 (make-player (make-posn (/ PLAYER-WIDTH 2) (/ FIELD-HEIGHT 2)) 0))
 
 (check-expect (move-player1 example1 "up")
               (make-player
@@ -80,7 +79,6 @@
 
 ; Player KeyEvent -> Player
 ; move player up and down the y axis when the "w" and "s" key's are pressed,
-; accordingly
 (define (move-player2 p ke)
   (cond
     [(> (posn-y (player-pos p)) (- FIELD-HEIGHT (/ PLAYER-HEIGHT 2)))
@@ -99,15 +97,80 @@
     (make-player
      (make-posn (/ PLAYER-WIDTH 2) (+ (posn-y (player-pos p)) PLAYER-SPEED))
      (player-score p))]
+    [else (make-player
+     (make-posn (/ PLAYER-WIDTH 2) (posn-x (player-pos p)))
+     (player-score p))]
     ))
 
-(check-expect (render example1)
+; Player KeyEvent -> Player
+; move AI player up and down the y axis 
+; accordingly
+; (define (move-bot p ke))
+
+(check-expect (render-player example1)
               (place-image PLAYER (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (/ FIELD-HEIGHT 2) FIELD))
 ; Player -> Image
-(define (render p)
+(define (render-player p)
   (place-image PLAYER (posn-x (player-pos p)) (posn-y (player-pos p)) FIELD))
 
-(define (pong p)
+(define (player1 p)
   (big-bang p
-   [to-draw render]
+   [to-draw render-player]
    [on-key move-player1]))
+
+(define (player2 p)
+  (big-bang p
+   [to-draw render-player]
+   [on-key move-player2]))
+
+; Player Players -> Image
+; print a scene withg both players 
+(define (render-both-players p1 p2)
+  (place-image PLAYER (posn-x (player-pos p1)) (posn-y (player-pos p1))
+               (place-image PLAYER (posn-x (player-pos p2)) (posn-y (player-pos p2)) FIELD)))
+
+; Player1 Player2 -> Players
+; (define (move-both-players p1 p2))
+
+; ------------------------------------
+(define-struct ball [pos vel])
+; Ball is a structure
+; (make-ball Posn Posn)
+; interpretation pos represents where the ball is (it's x and y coordinates)
+
+; Ball -> Ball
+; move the ball accross the field
+; change y-direction when reaching the upper and lower limits of the field
+; whishlist:
+; - ball should only start moving when space is pressed;
+; - ball should be placed again in the field once it goes out the left
+; and right limits
+
+(define (move-ball b)
+  (make-ball
+   (make-posn
+     (+ (posn-x (ball-pos b)) (posn-x (ball-vel b)))
+     (+ (posn-y (ball-pos b)) (posn-y (ball-vel b))))
+   (cond
+       [(>= (posn-y (ball-pos b)) (- FIELD-HEIGHT (posn-y (ball-vel b))))
+        (make-posn
+         (posn-x (ball-vel b))
+         (* (posn-y (ball-vel b)) -1))]
+       [(<= (posn-y (ball-pos b)) (- 0 (posn-y (ball-vel b))))
+        (make-posn
+         (posn-x (ball-vel b))
+         (* (posn-y (ball-vel b)) -1))]
+       [else (ball-vel b)])
+   ))
+
+; Ball -> Image
+; draw the ball in the field
+(define (render-ball  b)
+    (place-image BALL (posn-x (ball-pos b)) (posn-y (ball-pos b)) FIELD))
+
+(define (baller p)
+  (big-bang p
+   [to-draw render-ball]
+   [on-tick move-ball]))
+
+(baller (make-ball (make-posn 1 1) (make-posn 1 10)))
