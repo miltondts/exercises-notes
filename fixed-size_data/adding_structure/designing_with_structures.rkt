@@ -102,7 +102,57 @@
 ; ------------------------------------------------------------------------------
 ; Exercise 82
 
+; 1) Define the data
+; 3-letter-word is a structure (make-three-letter-word 1String 1String 1String ))
+ (define-struct 3-letter-word [first second third])
+
+; 2) Define signature, purpose statement and a header
 ; three-letter-word three-letter-word -> three-letter-word
 ; produces a word that retains the letters if they agree and contains false where
 ; the letters disagree
 ; (define (compare-word word1 word2) ...)
+
+; 3) Create functional examples
+(define e1 (make-3-letter-word "a" "a" "a"))
+(define e2 (make-3-letter-word "b" "a" "a"))
+(define e3 (make-3-letter-word "a" "a" "b"))
+(define e4 (make-3-letter-word "a" "z" "a"))
+(define e5 (make-3-letter-word "r" "e" "d"))
+
+
+; 4) Build a template
+; (define (compare-word word1 word2)
+;  (... 3-letter-word-first word1
+;   ... 3-letter-word-second word1
+;   ... 3-letter-word-third word1
+;   ... 3-letter-word-first word2
+;   ... 3-letter-word-second word2
+;   ... 3-letter-word-third word2
+;   ... ))
+
+; 6) Test
+(check-expect (compare-word e1 e1) e1)
+(check-expect (compare-word e1 e2) (make-3-letter-word #false "a" "a"))
+(check-expect (compare-word e1 e3) (make-3-letter-word "a" "a" #false))
+(check-expect (compare-word e1 e4) (make-3-letter-word "a" #false "a"))
+(check-expect (compare-word e2 e4) (make-3-letter-word #false #false "a"))
+(check-expect (compare-word e3 e5) (make-3-letter-word #false #false #false))
+
+
+; 5) Build the function
+(define (compare-word word1 word2)
+  (make-3-letter-word 
+                       (cond [(string=?  (3-letter-word-first word1)
+                                   (3-letter-word-first word2))
+                              (3-letter-word-first word1)]
+                             [else #false])  
+                       (cond [(string=?  (3-letter-word-second word1)
+                                   (3-letter-word-second word2))
+                              (3-letter-word-second word1)]
+                             [else #false]) 
+                        (cond [(string=?  (3-letter-word-third word1)
+                                   (3-letter-word-third word2))
+                              (3-letter-word-third word1)]
+                             [else #false])
+                       ))
+
