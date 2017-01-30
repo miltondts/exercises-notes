@@ -22,7 +22,6 @@
 (define BALL (square BALL-HEIGHT "solid" "black"))
 (define FIELD (add-line CANVAS (/ FIELD-WIDTH 2) 0 (/ FIELD-WIDTH 2) FIELD-HEIGHT (pen "black" PLAYER-WIDTH "short-dash" "butt" "bevel")))
 
-
 (define-struct player [pos score])
 ; Player is a structure
 ; (make-player Posn Number)
@@ -30,7 +29,6 @@
 ; coordinates of where the player is, dir is the direction (-1 if going up,
 ; 1 if going down) the player is heading and score is a non negative number,
 ; starting at 0, that represents the player's score
-
 
 (define example1 (make-player (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (/ FIELD-HEIGHT 2)) 0))
 (define example2 (make-player (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) 0) 0))
@@ -77,6 +75,13 @@
     [else p]
     ))
 
+(check-expect (render-player example1)
+              (place-image PLAYER (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (/ FIELD-HEIGHT 2) FIELD))
+; Player -> Image
+(define (render-player p)
+  (place-image PLAYER (posn-x (player-pos p)) (posn-y (player-pos p)) FIELD))
+
+; ------------------------------------------------------------------------------
 ; Player KeyEvent -> Player
 ; move player up and down the y axis when the "w" and "s" key's are pressed,
 (define (move-player2 p ke)
@@ -97,42 +102,40 @@
     (make-player
      (make-posn (/ PLAYER-WIDTH 2) (+ (posn-y (player-pos p)) PLAYER-SPEED))
      (player-score p))]
-    [else (make-player
-     (make-posn (/ PLAYER-WIDTH 2) (posn-x (player-pos p)))
-     (player-score p))]
+    [else p]
     ))
 
-; Player KeyEvent -> Player
-; move AI player up and down the y axis 
-; accordingly
-; (define (move-bot p ke))
+; ------------------------------------------------------------------------------
+(define-struct both-players [p1 p2])
+; Both-players is a structure
+; (make-both-players Player Player)
+; interpretation information regarding player1's location and player2's location
 
-(check-expect (render-player example1)
-              (place-image PLAYER (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (/ FIELD-HEIGHT 2) FIELD))
-; Player -> Image
-(define (render-player p)
-  (place-image PLAYER (posn-x (player-pos p)) (posn-y (player-pos p)) FIELD))
-
-(define (player1 p)
-  (big-bang p
-   [to-draw render-player]
-   [on-key move-player1]))
-
-(define (player2 p)
-  (big-bang p
-   [to-draw render-player]
-   [on-key move-player2]))
-
-; Player Players -> Image
+; Both-players Key-Event -> Both-players
+(define (move-p1 p ke)
+  (make-both-players
+   (move-player1 (both-players-p1 p ) ke)
+   (both-players-p2 p)))
+  
+; Both-players KeyEvent -> Both-players
+(define (move-p2 p ke)
+   (make-both-players
+    (both-players-p1 p)
+    (move-player2 (both-players-p2 p) ke)))
+ 
+; Both-players -> Image
 ; print a scene withg both players 
-(define (render-both-players p1 p2)
-  (place-image PLAYER (posn-x (player-pos p1)) (posn-y (player-pos p1))
-               (place-image PLAYER (posn-x (player-pos p2)) (posn-y (player-pos p2)) FIELD)))
+(define (render-both-players p)
+  (place-image PLAYER (posn-x (player-pos (both-players-p1 p))) (posn-y (player-pos (both-players-p1 p)))
+               (place-image PLAYER (posn-x (player-pos (both-players-p2 p))) (posn-y (player-pos (both-players-p2 p))) FIELD)))
 
-; Player1 Player2 -> Players
-; (define (move-both-players p1 p2))
+(define (test-both p)
+  (big-bang p
+   [to-draw render-both-players]
+   [on-key move-p1]
+   [on-release move-p2]))
 
-; ------------------------------------
+; ------------------------------------------------------------------------------
 (define-struct ball [pos vel])
 ; Ball is a structure
 ; (make-ball Posn Posn)
@@ -147,21 +150,28 @@
 ; and right limits
 
 (define (move-ball b)
-  (make-ball
-   (make-posn
-     (+ (posn-x (ball-pos b)) (posn-x (ball-vel b)))
-     (+ (posn-y (ball-pos b)) (posn-y (ball-vel b))))
-   (cond
-       [(>= (posn-y (ball-pos b)) (- FIELD-HEIGHT (posn-y (ball-vel b))))
-        (make-posn
-         (posn-x (ball-vel b))
-         (* (posn-y (ball-vel b)) -1))]
-       [(<= (posn-y (ball-pos b)) (- 0 (posn-y (ball-vel b))))
-        (make-posn
-         (posn-x (ball-vel b))
-         (* (posn-y (ball-vel b)) -1))]
-       [else (ball-vel b)])
-   ))
+  (cond
+    [(> (posn-x (ball-pos b)) FIELD-WIDTH)
+     (make-ball
+      (make-posn 0 0)
+      (make-posn 1 1))]
+    [else
+     (make-ball
+      (make-posn
+       (+ (posn-x (ball-pos b)) (posn-x (ball-vel b)))
+       (+ (posn-y (ball-pos b)) (posn-y (ball-vel b))))
+      (cond
+        [(>= (posn-y (ball-pos b)) (- FIELD-HEIGHT (posn-y (ball-vel b))))
+         (make-posn
+          (posn-x (ball-vel b))
+          (* (posn-y (ball-vel b)) -1))]
+        [(<= (posn-y (ball-pos b)) (- 0 (posn-y (ball-vel b))))
+         (make-posn
+          (posn-x (ball-vel b))
+          (* (posn-y (ball-vel b)) -1))]
+        [else (ball-vel b)])
+      )]
+     ))
 
 ; Ball -> Image
 ; draw the ball in the field
@@ -173,4 +183,25 @@
    [to-draw render-ball]
    [on-tick move-ball]))
 
-(baller (make-ball (make-posn 1 1) (make-posn 1 10)))
+; ------------------------------------------------------------------------------
+(define-struct pong [p1 p2 ball])
+; Pong is a structure
+; (make-pong Player Player Ball)
+; interpretation pong represents the position (x and y coordinates) of both
+; players and of the ball
+
+; Pong -> Image
+; draw the ball and the players in the field
+(define (render-pong p)
+    (overlay
+     (render-ball (pong-ball p))
+     (render-player (pong-p1 p))
+     (render-player (pong-p2 p))))
+
+
+;(define (pong p)
+;  (big-bang p
+;   [to-draw render-pong]
+;   [on-tick move-pong-ball]
+;   [on-key move-pong-p1]
+;   [on-release move-pong-p2]))
