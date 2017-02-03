@@ -21,6 +21,7 @@
 (define BALL-HEIGHT 3)
 (define BALL (square BALL-HEIGHT "solid" "black"))
 (define FIELD (add-line CANVAS (/ FIELD-WIDTH 2) 0 (/ FIELD-WIDTH 2) FIELD-HEIGHT (pen "black" PLAYER-WIDTH "short-dash" "butt" "bevel")))
+(define BALL-SPEED (make-posn 3 1))
 
 (define-struct player [pos score])
 ; Player is a structure
@@ -243,12 +244,19 @@
 ; interpretation pong represents the position (x and y coordinates) of both
 ; players and of the ball
 
+
+; Player -> Image
+(define (text-score p)
+  (text (number->string (player-score  p)) 36 "black"))
+
 ; Pong -> Image
 ; draw the ball and the players in the field
 (define (render-pong p)
     (place-image PLAYER (posn-x (player-pos (pong-p1 p))) (posn-y (player-pos (pong-p1 p)))
-               (place-image PLAYER (posn-x (player-pos (pong-p2 p))) (posn-y (player-pos (pong-p2 p)))
-                           (place-image BALL (posn-x (ball-pos (pong-ball p))) (posn-y (ball-pos (pong-ball p))) FIELD))))
+                 (place-image (text-score (pong-p1 p)) (+ (/ FIELD-WIDTH 2) (/ FIELD-WIDTH 4)) (/ FIELD-HEIGHT 4) 
+                              (place-image PLAYER (posn-x (player-pos (pong-p2 p))) (posn-y (player-pos (pong-p2 p)))
+                                           (place-image (text-score (pong-p2 p))  (- (/ FIELD-WIDTH 2) (/ FIELD-WIDTH 4)) (/ FIELD-HEIGHT 4)                   
+                                                        (place-image BALL (posn-x (ball-pos (pong-ball p))) (posn-y (ball-pos (pong-ball p))) FIELD))))))
 
 (define example12 (make-ball (make-posn
                               (- 0 2) 2)
@@ -279,17 +287,8 @@
                                             (make-posn 3 FIELD-HEIGHT)
                                             (make-posn 1 -1))))
 ; Ball goes through the right edge
-(check-expect (move-pong-ball
-               (make-pong example1 example4 example9))
-              (make-pong example1 example4 (make-ball
-                                            (make-posn PLAYER-WIDTH 0)
-                                            (make-posn 1 1))))
 ; Ball goes through the left edge
-(check-expect (move-pong-ball
-               (make-pong example1 example4 example12))
-              (make-pong example1 example4 (make-ball
-                                            (make-posn PLAYER-WIDTH 0)
-                                            (make-posn 1 1))))
+
 ; Ball hits player1                                            
 ; Ball hits player2
                           
@@ -298,17 +297,33 @@
 ; lower bounds of the field and the left and right bound of the field
 (define (move-pong-ball p)
   (make-pong
-   (pong-p1 p)
-   (pong-p2 p)
+   (cond
+     [(< (posn-x (ball-pos (pong-ball p))) (- 0 (posn-x (ball-vel (pong-ball p)))))
+      (make-player
+       (make-posn
+        (posn-x (player-pos (pong-p1 p)))
+        (posn-y (player-pos (pong-p1 p))))
+       (+ (player-score (pong-p1 p)) 1))]
+     [else
+     (pong-p1 p)])
+   (cond
+     [(> (posn-x (ball-pos (pong-ball p))) (+ FIELD-WIDTH (posn-x (ball-vel (pong-ball p)))))
+      (make-player
+       (make-posn
+        (posn-x (player-pos (pong-p2 p)))
+        (posn-y (player-pos (pong-p2 p))))
+       (+ (player-score (pong-p2 p)) 1))]
+     [else
+     (pong-p2 p)])
    (cond
      [(< (posn-x (ball-pos (pong-ball p))) (- 0 (posn-x (ball-vel (pong-ball p)))))
       (make-ball
        (make-posn PLAYER-WIDTH 0)
-       (make-posn 1 1))]
+       BALL-SPEED)]
      [(> (posn-x (ball-pos (pong-ball p))) (+ FIELD-WIDTH (posn-x (ball-vel (pong-ball p)))))
       (make-ball
        (make-posn PLAYER-WIDTH 0)
-       (make-posn 1 1))]
+        BALL-SPEED)]
      [else
       (make-ball
        (make-posn
@@ -332,7 +347,7 @@
            (* (posn-x (ball-vel (pong-ball p))) -1)
            (posn-y (ball-vel (pong-ball p))))]
          [(and
-           (<= (posn-x (ball-pos (pong-ball p))) (- 0 (posn-x (ball-vel (pong-ball p)))))
+           (<= (posn-x (ball-pos (pong-ball p))) (- PLAYER-WIDTH (posn-x (ball-vel (pong-ball p)))))
            (and
             (>= (posn-y (ball-pos (pong-ball p))) (- (posn-y (player-pos (pong-p2 p))) (/ PLAYER-HEIGHT 2)))
             (<= (posn-y (ball-pos (pong-ball p))) (+ (posn-y (player-pos (pong-p2 p))) (/ PLAYER-HEIGHT 2)))))
