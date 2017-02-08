@@ -1,13 +1,14 @@
-#include <arpa/inet.h>
-#include <errno.h>
-#include <poll.h>
-#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <assert.h>
+#include <errno.h>
+#include <poll.h>
+#include <signal.h>
+#include <string.h>
 #include <unistd.h>
 
 #define     MAX_CONNECTIONS     8       /* Maximum number of connections */
@@ -20,28 +21,70 @@ typedef struct Users{
     uint16_t port;
 } User;
 
-typedef struct CliFds {
+typedef struct PollFds {
     struct pollfd *pfds;    /*array of pollfd*/
     int poll_size;          /*maximum number of file descriptors*/
     int poll_used;          /*number of used file descriptors*/
-} CliFds;
+    int(**handlers)(struct pollfd*);   /*poll handler*/
 
-CliFds* make_fds(unsigned int size) {
-    CliFds *ptr = malloc(sizeof(CliFds));
+} PollFds;
+
+int handle_stdin(struct pollfd *pfds)
+{
+    pfds->revents = 0;
+    char msg[255];
+    int ret = 0;
+    
+    ret = read(pfds->fd, msg, sizeof(msg));
+	if (ret < 0) {
+		return ret;
+	} else if (msg[0] == '/') {
+		if (strncmp("connect ", msg[1], 8) != 0) {
+			return -1;
+		}; 
+
+		int ip_length = 0;
+		int ip_index = 9;
+		while (msg[ip_length + ip_index] != ' ') {
+			ip_length ++;
+		}
+
+		char ip[ip_length + 1];
+		memcpy(ip, &msg[ip_index], ip_length + 1 );
+		ip[ip_length + 1] = '\0';
+
+		printf("IP= %s\n", ip);
+
+		unsigned char dst[sizeof(struct in4_addr)];
+        if (inet_pton(AF_INET, ip, &dst) != 1) {
+			return -1;
+		};
+
+	} else {
+		printf("%s", msg);
+		//TODO: handle messages greater than the buffer length
+ 	}
+
+}
+
+PollFds* make_fds(unsigned int size) {
+    PollFds *ptr = malloc(sizeof(PollFds));
     ptr->poll_size = size;
     ptr->poll_used = 0;
     ptr->pfds = malloc(size * sizeof(struct pollfd));
+    ptr->handlers = malloc(size * sizeof(handle_stdin));
 
     return ptr;
 }
 
-int insert(CliFds *ptr, int fd, short events) {
+int insert(PollFds *ptr, int fd, short events, int(*handler)(struct pollfd*)) {
     if (ptr->poll_used >= ptr->poll_size) {
         return -1;
     }
 
     ptr->pfds[ptr->poll_used].fd = fd;
     ptr->pfds[ptr->poll_used].events = events;
+    ptr->handlers[ptr->poll_used] = handler;
     ptr->poll_used++;
 
     return 0;
@@ -68,11 +111,12 @@ int make_server(uint32_t ip, uint16_t port)
     return sfd;
 }
 
-int main(int argc, char *argv[])
+
+User* create_user(int argc, char *argv[])
 {
     if(argc < 3) {
         fprintf(stdout, "Usage: chato ALIAS IP PORT\n");
-        exit(EXIT_FAILURE);
+        return NULL;
     }
 
     User* user;
@@ -80,75 +124,85 @@ int main(int argc, char *argv[])
     user->alias = (char*) malloc(strlen(argv[1]));
     strcpy(user->alias, argv[1]);
     if(inet_pton(AF_INET, argv[2], &user->ip) <= 0) {
-        fprintf(stderr, "Invalid IP. errno: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
+        free(user->alias);
+        free(user);
+        return NULL;
     }
 
     errno = 0;
     char *endptr;
     user->port = strtoul(argv[3], &endptr, 10);
     if(errno != 0 || (argv[3] == endptr)) {
-        fprintf(stderr, "Invalid port. errno: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
+        free(user->alias);
+        free(user);
+        return NULL;
     }
+
+    return user;
+}
+
+
+int handle_client(stuct pollfd *pfds)
+{
+    pfds.revents = 0;
+    char buf[255];
+    return read(pfds.fd, buf, sizeof(buf));
+}
+
+int handle_server(stuct pollfd *pfds)
+{
+    ptr->pfds[0].revents = 0;
+    struct sockaddr cli_addr;
+    socklen_t cli_len;
+
+    int cli_sfd = accept(ptr->pfds[0].fd, &cli_addr, &cli_len);
+    if (cli_sfd < 0)
+        fprintf(stderr, "Failed to accept. errno: %s\n", strerror(errno));
+
+    insert(ptr, cli_sfd, POLLIN, handle_client);
+    fprintf(stdout, "cli_sfd= %d\n", cli_sfd);
+}
+
+int handle_events(PollFds *ptr)
+{
+    int ret = poll(ptr->pfds, ptr->poll_used, TIMEOUT);
+
+    assert(ret >= 0);
+    if (ret != 0) {
+        for (int i = 0; i <= ptr->poll_used; i++) {
+            if (ptr->pfds[i].revents & ptr->pfds[i].events) {
+                if (ptr->handlers[i](&(ptr->pfds[i])) < 0) {
+                    exit(EXIT_FAILURE);
+                }
+
+            }
+        }
+    }
+
+    return ret;
+}
+
+int main(int argc, char *argv[])
+{
+    User* user;
+
+    user = create_user(argc, argv);
+    assert(user != NULL);
 
     char str[INET_ADDRSTRLEN];
     if (inet_ntop(AF_INET, &user->ip, str, INET_ADDRSTRLEN) == NULL){
-
         exit(EXIT_FAILURE);
     }
 
     printf("Alias: %s\nIP: %s\nport: %u\n", user->alias, str, user->port);
-    free(user);
     int server_sfd = make_server(user->ip, user->port);
-    if (server_sfd < 0) {
-        fprintf(stderr, "Failed to get server socket. errno: %s\n", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
+    assert(server_sfd > 0);
 
-    CliFds *ptr = make_fds(MAX_CONNECTIONS);
-    insert(ptr, STDIN_FILENO, POLLIN);
-    insert(ptr, server_sfd, POLLIN);
-    while(1) {
-        // Wait 10 seconds
-        int ret = poll(ptr->pfds, ptr->poll_used, TIMEOUT);
-        // Check if poll actually succeded
-        if (ret < 0) {
-            fprintf(stderr, "Failed to poll. errno: %s\n", strerror(errno));
-            exit(EXIT_FAILURE);
-        } else if (ret == 0) {
-            fprintf(stdout, "Poll timed out.\n");
-        } else {
-            if (ptr->pfds[0].revents & POLLIN) {
-                ptr->pfds[0].revents = 0;
-                char buf[255];
-                read(STDIN_FILENO, buf, sizeof(buf));
-                fprintf(stdout, "read from stdin: %s\n", buf);
-            }
-
-            if (ptr->pfds[1].revents & POLLIN) {
-                ptr->pfds[1].revents = 0;
-                struct sockaddr cli_addr;
-                socklen_t cli_len;
-
-                int cli_sfd = accept(server_sfd, &cli_addr, &cli_len);
-                if (cli_sfd < 0)
-                    fprintf(stderr, "Failed to accept. errno: %s\n", strerror(errno));
-
-                insert(ptr, cli_sfd, POLLIN);
-                fprintf(stdout, "cli_sfd= %d\n", cli_sfd);
-            }
-
-            for (int i = 2; i <= ptr->poll_used; i++) {
-                if (ptr->pfds[i].revents & POLLIN) {
-                    ptr->pfds[i].revents = 0;
-                    char buf[255];
-                    read(ptr->pfds[i].fd, buf, sizeof(buf));
-                    fprintf(stdout, "read from client: %s\n", buf);
-                }
-            }
-        }
-    }
+    PollFds *ptr = make_fds(MAX_CONNECTIONS);
+    insert(ptr, STDIN_FILENO, POLLIN, handle_stdin);
+//    insert(ptr, server_sfd, POLLIN, handle_server);
+    while(handle_events(ptr) >= 0);
+    free(user);
 
     return 0;
 }
