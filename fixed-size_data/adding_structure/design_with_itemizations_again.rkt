@@ -5,17 +5,18 @@
 ; Exercise 94
 (require (lib "2htdp/image"))
 
-(define CANVAS-WIDTH 180s)
-(define CANVAS-HEIGHT 320)
-(define TANK-WIDTH (/ CANVAS-WIDTH 10))
-(define TANK-HEIGHT (/ CANVAS-HEIGHT 10))
-(define UFO-DIAMETER (/ CANVAS-WIDTH 10))
 (define CANVAS-COLOR "blue")
 (define TANK-COLOR "green")
 (define UFO-COLOR "green")
+(define CANVAS-WIDTH 180)
+(define CANVAS-HEIGHT 320)
+(define TANK-WIDTH (/ CANVAS-WIDTH 10))
+(define TANK-HEIGHT (/ CANVAS-HEIGHT 10))
+(define UFO-DIAMETER (/ CANVAS-WIDTH 15))
+(define UFO-PLATE (rectangle (* UFO-DIAMETER 5) (/ UFO-DIAMETER 5) "solid" UFO-COLOR))
 (define BCKGRND (empty-scene CANVAS-WIDTH CANVAS-HEIGHT CANVAS-COLOR))
 (define TANK (rectangle TANK-WIDTH TANK-HEIGHT "solid" TANK-COLOR))
-(define UFO (circle UFO-DIAMETER "solid" UFO-COLOR))
+(define UFO (overlay UFO-PLATE (circle UFO-DIAMETER "solid" UFO-COLOR)))
 
 (place-image UFO (/ CANVAS-WIDTH 2) UFO-DIAMETER
              (place-image TANK (/ CANVAS-WIDTH 2) (- CANVAS-HEIGHT (/ TANK-HEIGHT 2)) BCKGRND))
@@ -66,3 +67,8 @@
 ; Exercise 96 - The sketches will be in the notebook
 
 
+; ------------------------------------------------------------------------------
+; SIGS -> Image
+; adds TANK, UFO, and possibly MISSILE to 
+; the BACKGROUND scene
+(define (si-render s) BACKGROUND)
