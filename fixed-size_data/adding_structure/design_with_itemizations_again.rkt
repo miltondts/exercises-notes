@@ -13,10 +13,11 @@
 (define TANK-WIDTH (/ CANVAS-WIDTH 10))
 (define TANK-HEIGHT (/ CANVAS-HEIGHT 10))
 (define UFO-DIAMETER (/ CANVAS-WIDTH 15))
-(define UFO-PLATE (rectangle (* UFO-DIAMETER 5) (/ UFO-DIAMETER 5) "solid" UFO-COLOR))
+(define UFO-PLATE (rectangle (* UFO-DIAMETER 3) (/ UFO-DIAMETER 5) "solid" UFO-COLOR))
 (define BCKGRND (empty-scene CANVAS-WIDTH CANVAS-HEIGHT CANVAS-COLOR))
 (define TANK (rectangle TANK-WIDTH TANK-HEIGHT "solid" TANK-COLOR))
 (define UFO (overlay UFO-PLATE (circle UFO-DIAMETER "solid" UFO-COLOR)))
+(define MISSILE (triangle (/ TANK-HEIGHT 10) "solid" "red"))
 
 (place-image UFO (/ CANVAS-WIDTH 2) UFO-DIAMETER
              (place-image TANK (/ CANVAS-WIDTH 2) (- CANVAS-HEIGHT (/ TANK-HEIGHT 2)) BCKGRND))
@@ -66,9 +67,87 @@
 ; ------------------------------------------------------------------------------
 ; Exercise 96 - The sketches will be in the notebook
 
-
 ; ------------------------------------------------------------------------------
 ; SIGS -> Image
-; adds TANK, UFO, and possibly MISSILE to 
-; the BACKGROUND scene
-(define (si-render s) BACKGROUND)
+; renders the given game state on top of BACKGROUND 
+; for examples see figure 32
+(define (si-render s)
+  (cond
+    [(aim? s)
+     (tank-render (aim-tank s)
+                  (ufo-render (aim-ufo s) BCKGRND))]
+    [(fired? s)
+     (tank-render
+       (fired-tank s)
+       (ufo-render (fired-ufo s)
+                   (missile-render (fired-missile s)
+                                   BCKGRND)))]))
+
+; ------------------------------------------------------------------------------
+; Exercise 97
+; The result should be the same because we are simply adding the images together
+; (placing them on top of each other). Adding the UFO to a image with a tank, or
+; a tank to an image with a UFO should be the same.
+(define tank-ex1 (make-tank 10 3))
+(check-expect (tank-render tank-ex1 BCKGRND)
+              (place-image TANK 10 (- CANVAS-HEIGHT (/ TANK-HEIGHT 2)) BCKGRND))
+; Tank Image -> Image 
+; adds t to the given image im
+(define (tank-render t im)
+  (place-image TANK (tank-loc t) (- CANVAS-HEIGHT (/ TANK-HEIGHT 2)) im))
+
+(define ufo-ex1 (make-posn 10 10))
+(check-expect (ufo-render ufo-ex1 BCKGRND)
+              (place-image UFO 10 10 BCKGRND))
+; UFO Image -> Image 
+; adds u to the given image im
+(define (ufo-render u im)
+  (place-image UFO (posn-x u) (posn-y u) im))
+
+(define missile-ex1 (make-posn 10 10))
+(check-expect (missile-render missile-ex1 BCKGRND)
+              (place-image MISSILE 10 10 BCKGRND))
+; Missile Image -> Image 
+; adds m to the given image im
+(define (missile-render m im)
+  (place-image MISSILE (posn-x m) (posn-y m) im))
+
+; ------------------------------------------------------------------------------
+; Exercise 98
+
+(define aim-ex1 (make-aim (make-posn 20 10) (make-tank 28 -3)))
+(define aim-ex2 (make-aim (make-posn 20 CANVAS-HEIGHT) (make-tank 28 -3)))
+
+(define fired-ex1 (make-fired (make-posn 20 10)
+                              (make-tank 28 -3)
+                              (make-posn 28 (- CANVAS-HEIGHT TANK-HEIGHT))))
+(define fired-ex2 (make-fired (make-posn 20 CANVAS-HEIGHT)
+                              (make-tank 28 -3)
+                              (make-posn 28 10)))
+(define fired-ex3 (make-fired (make-posn 20 50)
+                              (make-tank 28 -3)
+                              (make-posn 20 50)))
+
+(check-expect (si-game-over? aim-ex1) #false)
+(check-expect (si-game-over? aim-ex2) #true)
+(check-expect (si-game-over? fired-ex1) #false)
+(check-expect (si-game-over? fired-ex2) #true)
+(check-expect (si-game-over? fired-ex3) #true)
+
+; SIGS -> Bool
+; returns true if the UFO lands or if the missile hits the UFO, and retruns
+; false otherwhise
+(define (si-game-over? s)
+  (cond
+    [(aim? s)
+     (cond
+       [(>= (posn-y (aim-ufo s)) CANVAS-HEIGHT) #true]
+       [else #false])]
+    [(fired? s)
+     (cond
+       [(>= (posn-y (fired-ufo s)) CANVAS-HEIGHT) #true]
+       [(and
+         (<= (posn-y (fired-missile s)) (posn-y (fired-ufo s)))
+         (<= (posn-x (fired-missile s)) (+ (posn-x (fired-ufo s)) UFO-DIAMETER))
+         (>= (posn-x (fired-missile s)) (- (posn-x (fired-ufo s)) UFO-DIAMETER))) #true]
+       [else #false])]))
