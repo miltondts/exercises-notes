@@ -18,6 +18,8 @@
 (define TANK (rectangle TANK-WIDTH TANK-HEIGHT "solid" TANK-COLOR))
 (define UFO (overlay UFO-PLATE (circle UFO-DIAMETER "solid" UFO-COLOR)))
 (define MISSILE (triangle (/ TANK-HEIGHT 10) "solid" "red"))
+(define UFO-SPEED 3)
+(define MISSILE-SPEED UFO-SPEED)
 
 (place-image UFO (/ CANVAS-WIDTH 2) UFO-DIAMETER
              (place-image TANK (/ CANVAS-WIDTH 2) (- CANVAS-HEIGHT (/ TANK-HEIGHT 2)) BCKGRND))
@@ -151,3 +153,95 @@
          (<= (posn-x (fired-missile s)) (+ (posn-x (fired-ufo s)) UFO-DIAMETER))
          (>= (posn-x (fired-missile s)) (- (posn-x (fired-ufo s)) UFO-DIAMETER))) #true]
        [else #false])]))
+
+
+; ------------------------------------------------------------------------------
+; Exercise 99
+
+(check-random
+ (si-move aim-ex3)
+ (si-move-proper aim-ex3 (random (- CANVAS-WIDTH UFO-DIAMETER))))
+; SIGS -> SIGS
+; determine to which position each of the elements of SIGS (missile, tank, UFO)
+; move to
+(define (si-move w)
+  (si-move-proper w (random (- CANVAS-WIDTH UFO-DIAMETER))))
+
+(define aim-ex3
+  (make-aim
+   (make-posn 20 10)
+   (make-tank CANVAS-WIDTH 3)))
+(define aim-ex4
+  (make-aim
+   (make-posn 20 10)
+   (make-tank 0 -3)))
+(define fired-ex4
+  (make-fired
+   (make-posn 20 50)
+   (make-tank CANVAS-WIDTH 3)
+   (make-posn 20 50)))
+(define fired-ex5
+  (make-fired
+   (make-posn 20 50)
+   (make-tank 0 -3)
+   (make-posn 20 50)))
+
+(check-expect (si-move-proper aim-ex1 3)
+              (make-aim
+               (make-posn 3 (+ 10 UFO-SPEED))
+               (make-tank 25 -3)))
+(check-expect (si-move-proper aim-ex3 3)
+              (make-aim
+               (make-posn 3 (+ 10 UFO-SPEED))
+               (make-tank (- CANVAS-WIDTH 3) -3)))
+(check-expect (si-move-proper aim-ex4 3)
+              (make-aim
+               (make-posn 3 (+ 10 UFO-SPEED))
+               (make-tank 3 3)))
+(check-expect (si-move-proper fired-ex1 3)
+              (make-fired
+               (make-posn 3 (+ 10 UFO-SPEED))
+               (make-tank 25 -3)
+               (make-posn 28 (- (- CANVAS-HEIGHT TANK-HEIGHT) MISSILE-SPEED))))
+(check-expect (si-move-proper fired-ex4 3)
+              (make-fired
+               (make-posn 3 (+ 50 UFO-SPEED))
+               (make-tank (- CANVAS-WIDTH 3) -3)
+               (make-posn 20 (- 50 MISSILE-SPEED))))
+(check-expect (si-move-proper fired-ex5 3)
+              (make-fired
+               (make-posn 3 (+ 50 UFO-SPEED))
+               (make-tank 3 3)
+               (make-posn 20 (- 50 MISSILE-SPEED))))
+
+; SIGS Number -> SIGS 
+; move the space-invader objects predictably by delta
+(define (si-move-proper w delta)
+  (cond
+    [(fired? w)
+     (make-fired
+      (make-posn delta (+ (posn-y (fired-ufo w)) UFO-SPEED))
+      (if
+       (or
+        (>= (tank-loc (fired-tank w)) CANVAS-WIDTH)
+        (<= (tank-loc (fired-tank w)) 0))
+       (make-tank (- (tank-loc (fired-tank w)) (tank-vel (fired-tank w))) (- 0 (tank-vel (fired-tank w))))
+       (make-tank (+ (tank-loc (fired-tank w)) (tank-vel (fired-tank w))) (tank-vel (fired-tank w))))
+      (make-posn (posn-x (fired-missile w)) (- (posn-y (fired-missile w)) MISSILE-SPEED)))]
+    [else
+     (make-aim
+      (make-posn delta (+ (posn-y (aim-ufo w)) UFO-SPEED))
+      (if
+       (or
+        (>= (tank-loc (aim-tank w)) CANVAS-WIDTH)
+        (<= (tank-loc (aim-tank w)) 0))
+       (make-tank (- (tank-loc (aim-tank w)) (tank-vel (aim-tank w))) (- 0 (tank-vel (aim-tank w))))
+       (make-tank (+ (tank-loc (aim-tank w)) (tank-vel (aim-tank w))) (tank-vel (aim-tank w)))))]
+    ))
+
+; Stop! experiment with random
+(random 42)
+(random 69)
+(random 666)
+(random 1001)
+(random 2020)
