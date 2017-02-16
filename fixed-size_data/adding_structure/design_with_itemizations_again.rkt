@@ -4,6 +4,7 @@
 ; Designing with Itemizations, Again
 ; Exercise 94
 (require (lib "2htdp/image"))
+(require (lib "2htdp/universe"))
 
 (define CANVAS-COLOR "blue")
 (define TANK-COLOR "green")
@@ -18,7 +19,7 @@
 (define TANK (rectangle TANK-WIDTH TANK-HEIGHT "solid" TANK-COLOR))
 (define UFO (overlay UFO-PLATE (circle UFO-DIAMETER "solid" UFO-COLOR)))
 (define MISSILE (triangle (/ TANK-HEIGHT 10) "solid" "red"))
-(define UFO-SPEED 3)
+(define UFO-SPEED 1)
 (define MISSILE-SPEED UFO-SPEED)
 
 (place-image UFO (/ CANVAS-WIDTH 2) UFO-DIAMETER
@@ -245,3 +246,102 @@
 (random 666)
 (random 1001)
 (random 2020)
+
+; ------------------------------------------------------------------------------
+; Exercise 100
+
+(define aim-ex5 (make-aim (make-posn 20 10) (make-tank 28 3)))
+
+(check-expect (si-control aim-ex1 "right")
+              (make-aim (make-posn 20 10) (make-tank 28 3)))
+(check-expect (si-control aim-ex5 "right")
+              (make-aim (make-posn 20 10) (make-tank 28 3)))
+(check-expect (si-control aim-ex1 "left")
+              (make-aim (make-posn 20 10) (make-tank 28 -3)))
+(check-expect (si-control aim-ex1 "up")
+              aim-ex1)
+(check-expect (si-control aim-ex5 "right")
+              (make-aim (make-posn 20 10) (make-tank 28 3)))
+(check-expect (si-control aim-ex5 "left")
+              (make-aim (make-posn 20 10) (make-tank 28 -3)))
+(check-expect (si-control aim-ex1 " ")
+              (make-fired (make-posn 20 10)
+                              (make-tank 28 -3)
+                              (make-posn 28 (- CANVAS-HEIGHT TANK-HEIGHT))))
+(check-expect (si-control fired-ex3 " ")
+              fired-ex3)
+(check-expect (si-control fired-ex3 "right")
+              (make-fired (make-posn 20 50)
+                              (make-tank 28 3)
+                              (make-posn 20 50)))
+(check-expect (si-control fired-ex3 "left")
+              fired-ex3)
+(check-expect (si-control fired-ex3 "w")
+              fired-ex3)
+(check-expect (si-control fired-ex4 "left")
+              (make-fired
+               (make-posn 20 50)
+               (make-tank CANVAS-WIDTH -3)
+               (make-posn 20 50)))
+(check-expect (si-control fired-ex4 "right")
+              fired-ex4)
+
+; SIGS KeyEvent -> SIGS
+; pressing left ensure the tank goes to the left
+; pressing right ensures the tank goes right
+; pressing space bar launches the missile (if it hasn't already been launched)
+(define (si-control w ke)
+  (if (aim? w)
+      (cond
+        [(string=? "left" ke)
+         (make-aim
+          (aim-ufo w)
+          (make-tank (tank-loc (aim-tank w))
+                     (if (< (tank-vel (aim-tank w)) 0)
+                         (tank-vel (aim-tank w))
+                         (* -1 (tank-vel (aim-tank w))))))]
+        [(string=? "right" ke)
+         (make-aim
+          (aim-ufo w)
+          (make-tank (tank-loc (aim-tank w))
+                     (if (> (tank-vel (aim-tank w)) 0)
+                         (tank-vel (aim-tank w))
+                         (* -1 (tank-vel (aim-tank w))))))]
+        [(string=? " " ke)
+         (make-fired
+          (make-posn (posn-x (aim-ufo w)) (posn-y (aim-ufo w)))
+          (make-tank (tank-loc (aim-tank w)) (tank-vel (aim-tank w))) 
+          (make-posn (tank-loc (aim-tank w)) (- CANVAS-HEIGHT TANK-HEIGHT)))]
+        [else w])
+      (cond
+        [(string=? "left" ke)
+         (make-fired
+          (fired-ufo w)
+          (make-tank (tank-loc (fired-tank w))
+                     (if (< (tank-vel (fired-tank w)) 0)
+                         (tank-vel (fired-tank w))
+                         (* -1 (tank-vel (fired-tank w)))))
+          (fired-missile w))]
+        [(string=? "right" ke)
+         (make-fired
+          (fired-ufo w)
+          (make-tank (tank-loc (fired-tank w))
+                     (if (> (tank-vel (fired-tank w)) 0)
+                         (tank-vel (fired-tank w))
+                         (* -1 (tank-vel (fired-tank w)))))
+          (fired-missile w))]
+        [(string=? " " ke) w]
+        [else w])
+   ))
+
+
+(define (si-main w)
+  (big-bang w
+            [on-tick si-move]
+            [to-draw si-render]
+            [on-key si-control]
+            [stop-when si-game-over?]))
+
+(si-main aim-ex1)
+  
+
