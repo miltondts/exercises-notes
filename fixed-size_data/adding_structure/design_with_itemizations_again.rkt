@@ -6,21 +6,24 @@
 (require (lib "2htdp/image"))
 (require (lib "2htdp/universe"))
 
-(define CANVAS-COLOR "blue")
+(define CANVAS-COLOR "white")
 (define TANK-COLOR "green")
-(define UFO-COLOR "green")
+(define UFO-COLOR "blue")
+(define MISSILE-COLOR "red")
 (define CANVAS-WIDTH 180)
 (define CANVAS-HEIGHT 320)
-(define TANK-WIDTH (/ CANVAS-WIDTH 10))
-(define TANK-HEIGHT (/ CANVAS-HEIGHT 10))
-(define UFO-DIAMETER (/ CANVAS-WIDTH 15))
-(define UFO-PLATE (rectangle (* UFO-DIAMETER 3) (/ UFO-DIAMETER 5) "solid" UFO-COLOR))
+(define TANK-WIDTH (/ CANVAS-HEIGHT 10))
+(define TANK-HEIGHT (/ CANVAS-WIDTH 10))
+(define UFO-DIAMETER (/ CANVAS-WIDTH 20))
+(define UFO-WIDTH TANK-WIDTH)
+(define UFO-PLATE (rectangle  UFO-WIDTH (/ UFO-DIAMETER 5) "solid" UFO-COLOR))
 (define BCKGRND (empty-scene CANVAS-WIDTH CANVAS-HEIGHT CANVAS-COLOR))
 (define TANK (rectangle TANK-WIDTH TANK-HEIGHT "solid" TANK-COLOR))
 (define UFO (overlay UFO-PLATE (circle UFO-DIAMETER "solid" UFO-COLOR)))
-(define MISSILE (triangle (/ TANK-HEIGHT 10) "solid" "red"))
+(define MISSILE (triangle (/ TANK-WIDTH 5) "solid" MISSILE-COLOR))
 (define UFO-SPEED 1)
 (define MISSILE-SPEED UFO-SPEED)
+
 
 (place-image UFO (/ CANVAS-WIDTH 2) UFO-DIAMETER
              (place-image TANK (/ CANVAS-WIDTH 2) (- CANVAS-HEIGHT (/ TANK-HEIGHT 2)) BCKGRND))
@@ -150,9 +153,10 @@
      (cond
        [(>= (posn-y (fired-ufo s)) CANVAS-HEIGHT) #true]
        [(and
-         (<= (posn-y (fired-missile s)) (posn-y (fired-ufo s)))
-         (<= (posn-x (fired-missile s)) (+ (posn-x (fired-ufo s)) UFO-DIAMETER))
-         (>= (posn-x (fired-missile s)) (- (posn-x (fired-ufo s)) UFO-DIAMETER))) #true]
+         (<= (posn-y (fired-missile s)) (+ (posn-y (fired-ufo s)) (/ UFO-DIAMETER 2)))
+         (>= (posn-y (fired-missile s)) (- (posn-y (fired-ufo s)) (/ UFO-DIAMETER 2)))
+         (<= (posn-x (fired-missile s)) (+ (posn-x (fired-ufo s)) (/ UFO-WIDTH 2)))
+         (>= (posn-x (fired-missile s)) (- (posn-x (fired-ufo s)) (/ UFO-WIDTH 2)))) #true]
        [else #false])]))
 
 
@@ -224,8 +228,8 @@
       (make-posn delta (+ (posn-y (fired-ufo w)) UFO-SPEED))
       (if
        (or
-        (>= (tank-loc (fired-tank w)) CANVAS-WIDTH)
-        (<= (tank-loc (fired-tank w)) 0))
+        (>= (tank-loc (fired-tank w)) (- CANVAS-WIDTH (/ TANK-WIDTH 2)))
+        (<= (tank-loc (fired-tank w)) (/ TANK-WIDTH 2)))
        (make-tank (- (tank-loc (fired-tank w)) (tank-vel (fired-tank w))) (- 0 (tank-vel (fired-tank w))))
        (make-tank (+ (tank-loc (fired-tank w)) (tank-vel (fired-tank w))) (tank-vel (fired-tank w))))
       (make-posn (posn-x (fired-missile w)) (- (posn-y (fired-missile w)) MISSILE-SPEED)))]
@@ -337,10 +341,11 @@
 
 (define (si-main w)
   (big-bang w
-            [on-tick si-move]
             [to-draw si-render]
+            [stop-when si-game-over?]
             [on-key si-control]
-            [stop-when si-game-over?]))
+            [on-tick si-move]
+            ))
 
 (si-main aim-ex1)
   
