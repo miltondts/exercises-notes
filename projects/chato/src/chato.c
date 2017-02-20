@@ -25,14 +25,14 @@ typedef struct PollFds {
     struct pollfd *pfds;    /*array of pollfd*/
     int poll_size;          /*maximum number of file descriptors*/
     int poll_used;          /*number of used file descriptors*/
-    int(**handlers)(struct pollfd*);   /*poll handler*/
+    int(**handlers)(struct PollFds*, struct pollfd*);   /*poll handler*/
 
 } PollFds;
 
-int handle_stdin(struct pollfd *pfds)
+int handle_stdin(PollFds *ptr, struct pollfd *pfds)
 {
     pfds->revents = 0;
-    char msg[255];
+    char msg[MAX_STRLEN];
     int ret = 0;
     
     ret = read(pfds->fd, msg, sizeof(msg));
@@ -82,7 +82,7 @@ PollFds* make_fds(unsigned int size) {
     return ptr;
 }
 
-int insert(PollFds *ptr, int fd, short events, int(*handler)(struct pollfd*)) {
+int insert(PollFds *ptr, int fd, short events, int(*handler)(PollFds *ptr, struct pollfd*)) {
     if (ptr->poll_used >= ptr->poll_size) {
         return -1;
     }
@@ -91,7 +91,32 @@ int insert(PollFds *ptr, int fd, short events, int(*handler)(struct pollfd*)) {
     ptr->pfds[ptr->poll_used].events = events;
     ptr->handlers[ptr->poll_used] = handler;
     ptr->poll_used++;
-    printf("Inserted.\n");
+    printf("Inserted. \n");
+
+    return 0;
+}
+
+int rm(PollFds *ptr, struct pollfd *pfds) 
+{
+    int i = 0;
+    while(i < ptr->poll_used) {
+        if (&(ptr->pfds[i]) == pfds)
+            break;
+
+        i++;
+    }
+
+    if (i == ptr->poll_used) {
+        return -1;
+    }
+
+    for (int j = i + 1; j < ptr->poll_used; j++) {
+        //cpy here
+        ptr->pfds[j - 1] = ptr->pfds[j];
+        ptr->handlers[j - 1] = ptr->handlers[j];
+    }
+
+    ptr->poll_used--;
 
     return 0;
 }
@@ -149,17 +174,24 @@ User* create_user(int argc, char *argv[])
     return user;
 }
 
-
-/*
-int handle_client(struct pollfd *pfds)
+int handle_client(PollFds *ptr, struct pollfd *pfds)
 {
     pfds->revents = 0;
-    char buf[255];
-    return read(pfds->fd, buf, sizeof(buf));
-}
-*/
+    char buf[MAX_STRLEN];
+    int ret = read(pfds->fd, buf, sizeof(buf));
+    if (ret <= 0) {
+        printf("Client disconnected\n");
 
-int handle_new_connection(struct pollfd *pfds)
+        return ret;
+    }
+
+    buf[ret] = '\0';
+    printf("Client said: %s\n", buf);
+    
+    return ret; 
+}
+
+int handle_new_connection(PollFds *ptr, struct pollfd *pfds)
 {
     pfds->revents = 0;
     struct sockaddr cli_addr;
@@ -172,7 +204,7 @@ int handle_new_connection(struct pollfd *pfds)
         return 0; //TODO: Redefine what to do in case of error
     }
 
-    //insert(ptr, cli_sfd, POLLIN, handle_client);
+    insert(ptr, cli_sfd, POLLIN, handle_client);
     fprintf(stdout, "cli_sfd= %d\n", cli_sfd);
     return 0;
 }
@@ -185,7 +217,7 @@ int handle_events(PollFds *ptr)
     if (ret != 0) {
         for (int i = 0; i < ptr->poll_used; i++) {
             if (ptr->pfds[i].revents & ptr->pfds[i].events) {
-                if (ptr->handlers[i](&(ptr->pfds[i])) < 0) {
+                if (ptr->handlers[i](ptr, &(ptr->pfds[i])) < 0) {
                     exit(EXIT_FAILURE);
                 }
 
