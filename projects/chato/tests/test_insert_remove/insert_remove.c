@@ -73,17 +73,95 @@ int test_insert_empty(void)
 	return 0;
 }
 
-//int test_insert_middle(void)
+int test_insert_middle(void)
+{
+	PollFds *ptr = make_fds(6);
+	int used_before = ptr->poll_used;
+	insert(ptr, 4, 2, (void *)0xdeadbeef);	
+	insert(ptr, 3, 3, (void *)0xfaf3c0ca);	
+	insert(ptr, 9, 5, (void *)0xf1cab0ca);	
+	int used_after = ptr->poll_used;
+	assert(used_after == (used_before + 3));
+	assert(ptr->pfds[ptr->poll_used - 1].fd == 9);
+	assert(ptr->pfds[ptr->poll_used - 1].events == 5);
+	assert(ptr->handlers[ptr->poll_used - 1] == (void *)0xf1cab0ca);
 
-//int test_insert_full(void)
+	return 0;
+}
 
-//int test_rm_empty(void)
+int test_insert_full(void)
+{
+	PollFds *ptr = make_fds(3);
+	int used_before = ptr->poll_used;
+	insert(ptr, 4, 2, (void *)0xdeadbeef);	
+	insert(ptr, 3, 3, (void *)0xfaf3c0ca);	
+	insert(ptr, 9, 5, (void *)0xf1cab0ca);	
+	int used_after = ptr->poll_used;
+	assert(used_after == (used_before + 3));
+	assert(insert(ptr, 8, 4, (void *)0xcacacaca) == -1);	
+	assert(used_after == (used_before + 3));
+	assert(ptr->pfds[ptr->poll_used - 1].fd == 9);
+	assert(ptr->pfds[ptr->poll_used - 1].events == 5);
+	assert(ptr->handlers[ptr->poll_used - 1] == (void *)0xf1cab0ca);
+                         
+	return 0;
+}
 
-//int test_rm_middle(void)
+int test_rm_empty(void)
+{
+	PollFds *ptr = make_fds(10);
+	int used_before = ptr->poll_used;
+	assert(rm(ptr, ptr->pfds) == -1);
+	assert(ptr->poll_used == used_before);
 
-//int test_rm_full(void)
+	return 0;
+}
+
+int test_rm_middle(void)
+{
+	PollFds *ptr = make_fds(3);
+	int used_before = ptr->poll_used;
+	insert(ptr, 4, 2, (void *)0xdeadbeef);	
+	insert(ptr, 3, 3, (void *)0xfaf3c0ca);	
+	insert(ptr, 9, 5, (void *)0xf1cab0ca);	
+	int used_after = ptr->poll_used;
+	assert(used_after == (used_before + 3));
+	assert(rm(ptr, &(ptr->pfds[1])) == 0);
+	assert(ptr->poll_used == (used_after - 1));
+	assert(ptr->pfds[1].fd == 9);
+	assert(ptr->pfds[1].events == 5);
+	assert(ptr->handlers[1] == (void *)0xf1cab0ca);
+
+	return 0;
+}
+
+int test_rm_last(void)
+{
+	PollFds *ptr = make_fds(3);
+	int used_before = ptr->poll_used;
+	insert(ptr, 4, 2, (void *)0xdeadbeef);	
+	insert(ptr, 3, 3, (void *)0xfaf3c0ca);	
+	insert(ptr, 9, 5, (void *)0xf1cab0ca);	
+	int used_after = ptr->poll_used;
+	assert(used_after == (used_before + 3));
+	assert(rm(ptr, &(ptr->pfds[used_after - 1])) == 0);
+	assert(ptr->poll_used == (used_after - 1));
+	assert(ptr->pfds[ptr->poll_used - 1].fd == 3);
+	assert(ptr->pfds[ptr->poll_used - 1].events == 3);
+	assert(ptr->handlers[ptr->poll_used - 1] == (void *)0xfaf3c0ca);
+
+	return 0;
+}
 
 int main(void)
 {
-	return  test_insert_empty();
+	test_insert_empty();
+	test_insert_middle();
+	test_insert_full();
+	test_rm_empty();
+	test_rm_middle();
+	test_rm_last();
+
+	fprintf(stdout, "Success!\n");
+	return 0;
 }
