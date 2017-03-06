@@ -29,149 +29,53 @@ typedef struct PollFds {
 
 } PollFds;
 
-int handle_stdin(PollFds *ptr, struct pollfd *pfds)
-{
-    pfds->revents = 0;
-    char msg[MAX_STRLEN];
-    int ret = 0;
-    
-    ret = read(pfds->fd, msg, sizeof(msg));
-    if (ret < 0) {
-		return ret;
-    }
-    
-    msg[ret] = '\0';
-    if (msg[0] == '/') {
-		if (strncmp("connect ", &msg[1], 8) != 0) {
-			return -1;
-		}; 
+PollFds* make_fds(unsigned int size) {
+	PollFds *ptr = malloc(sizeof(PollFds));
+	ptr->poll_size = size;
+	ptr->poll_used = 0;
+	ptr->pfds = malloc(size * sizeof(struct pollfd));
+	ptr->handlers = malloc(size * sizeof(void*));
+	printf("size of handle_stdin = %ld\n", sizeof(void*));
 
-		int ip_length = 0;
-		int ip_index = 9;
-		while (msg[ip_length + ip_index] != ' ') {
-			ip_length ++;
-		}
+	return ptr;
+}
 
-		char ip[ip_length + 1];
-		memcpy(ip, &msg[ip_index], ip_length + 1 );
-		ip[ip_length + 1] = '\0';
+int insert(PollFds *ptr, int fd, short events, int(*handler)(PollFds *ptr, struct pollfd*)) {
+	if (ptr->poll_used >= ptr->poll_size) {
+		return -1;
+	}
 
-		printf("IP= %s\n", ip);
-
-		unsigned char dst[sizeof(struct in_addr)];
-        	if (inet_pton(AF_INET, ip, &dst) != 1) {
-			return -1;
-		};
-
-	} else {
-		printf("%s", msg);
-		//TODO: handle messages greater than the buffer length
- 	}
+	ptr->pfds[ptr->poll_used].fd = fd;
+	ptr->pfds[ptr->poll_used].events = events;
+	ptr->handlers[ptr->poll_used] = handler;
+	ptr->poll_used++;
+	printf("Inserted. \n");
 
 	return 0;
 }
 
-PollFds* make_fds(unsigned int size) {
-    PollFds *ptr = malloc(sizeof(PollFds));
-    ptr->poll_size = size;
-    ptr->poll_used = 0;
-    ptr->pfds = malloc(size * sizeof(struct pollfd));
-    ptr->handlers = malloc(size * sizeof(&handle_stdin));
-    printf("size of handle_stdin = %ld\n", sizeof(&handle_stdin));
-
-    return ptr;
-}
-
-int insert(PollFds *ptr, int fd, short events, int(*handler)(PollFds *ptr, struct pollfd*)) {
-    if (ptr->poll_used >= ptr->poll_size) {
-        return -1;
-    }
-
-    ptr->pfds[ptr->poll_used].fd = fd;
-    ptr->pfds[ptr->poll_used].events = events;
-    ptr->handlers[ptr->poll_used] = handler;
-    ptr->poll_used++;
-    printf("Inserted. \n");
-
-    return 0;
-}
-
 int rm(PollFds *ptr, struct pollfd *pfds) 
 {
-    int i = 0;
-    while(i < ptr->poll_used) {
-        if (&(ptr->pfds[i]) == pfds)
-            break;
+	int i = 0;
+	while(i < ptr->poll_used) {
+		if (&(ptr->pfds[i]) == pfds)
+			break;
 
-        i++;
-    }
+		i++;
+	}
 
-    if (i == ptr->poll_used) {
-        return -1;
-    }
+	if (i == ptr->poll_used) {
+		return -1;
+	}
 
-    for (int j = i + 1; j < ptr->poll_used; j++) {
-        //cpy here
-        ptr->pfds[j - 1] = ptr->pfds[j];
-        ptr->handlers[j - 1] = ptr->handlers[j];
-    }
+	for (int j = i + 1; j < ptr->poll_used; j++) {
+		ptr->pfds[j - 1] = ptr->pfds[j];
+		ptr->handlers[j - 1] = ptr->handlers[j];
+	}
 
-    ptr->poll_used--;
+	ptr->poll_used--;
 
-    return 0;
-}
-
-int make_server(uint32_t ip, uint16_t port)
-{
-    int sfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sfd < 0)
-        return sfd;
-
-    struct sockaddr_in addr;
-    memset(&addr, '\0', sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = INADDR_ANY;
-    addr.sin_port = htons(port);
-    if (bind(sfd, (struct sockaddr*) &addr, sizeof(addr)) < 0)
-        return -1;
-
-
-    if (listen(sfd, 0) < 0)
-        return -1;
-
-    return sfd;
-}
-
-
-User* create_user(int argc, char *argv[])
-{
-    if(argc < 3) {
-        fprintf(stdout, "Usage: chato ALIAS IP PORT\n");
-        return NULL;
-    }
-
-    User* user;
-    user = (User*) malloc(sizeof(User));
-    user->alias = (char*) malloc(strlen(argv[1]) + 1);
-    printf("strlen = %ld\n", strlen(argv[1]));
-    strncpy(user->alias, argv[1], strlen(argv[1]));
-    user->alias[strlen(argv[1])] = '\0';
-    if(inet_pton(AF_INET, argv[2], &user->ip) <= 0) {
-        free(user->alias);
-        free(user);
-        return NULL;
-    }
-
-    errno = 0;
-    char *endptr;
-    user->port = strtoul(argv[3], &endptr, 10);
-    if(errno != 0 || (argv[3] == endptr)) {
-        free(user->alias);
-        free(user);
-        return NULL;
-    }
-
-    return user;
+	return 0;
 }
 
 int handle_client(PollFds *ptr, struct pollfd *pfds)
@@ -190,6 +94,124 @@ int handle_client(PollFds *ptr, struct pollfd *pfds)
     
     return ret; 
 }
+
+int handle_stdin(PollFds *ptr, struct pollfd *pfds)
+{
+    pfds->revents = 0;
+    char msg[MAX_STRLEN];
+    int ret = 0;
+    
+    ret = read(pfds->fd, msg, sizeof(msg));
+    if (ret < 0) {
+		return ret;
+    }
+    
+    msg[ret] = '\0';
+    if (msg[0] == '/') {
+		//TODO: Add collected client IP to PollFds
+		//TODO: Add remove command in order to remove clients
+		if (strncmp("connect ", &msg[1], 8) != 0) {
+			return -1;
+		}; 
+
+		int ip_length = 0;
+		int ip_index = 9;
+		while (msg[ip_length + ip_index] != ' ') {
+			ip_length ++;
+		}
+
+		char ip[ip_length + 1];
+		memcpy(ip, &msg[ip_index], ip_length + 1);
+		ip[ip_length] = '\0';
+
+		struct sockaddr_in sa;
+		memset((char *) &sa, '\0', sizeof(sa));
+		sa.sin_family = AF_INET;
+        if (inet_pton(AF_INET, ip, &(sa.sin_addr)) != 1) {
+			return -1;
+		}
+
+		int port_index = ip_index + ip_length + 1;
+		char *endptr;
+		sa.sin_port = strtoul(&(msg[port_index]), &endptr, 10);
+		if(errno != 0 || (&(msg[ret - 1]) != endptr)) {
+			return -1;
+    	}
+
+		int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+		if(sockfd < 0)
+			return -1;
+
+		if (connect(sockfd, (struct sockaddr *) &sa, sizeof(sa)) < 0){
+			printf("Could not connect to %s:%d\n", ip, sa.sin_port);
+			return 0;
+		}
+
+    	insert(ptr, sockfd, POLLIN, handle_client);
+		printf("Connected to %s:%d\n", ip, sa.sin_port);
+
+	} else {
+		printf("%s", msg);
+		//TODO: handle messages greater than the buffer length
+		//TODO: send messages to clients
+	}
+
+	return 0;
+}
+
+
+int make_server(uint32_t ip, uint16_t port)
+{
+	int sfd = socket(AF_INET, SOCK_STREAM, 0);
+	if (sfd < 0)
+		return sfd;
+
+	struct sockaddr_in addr;
+	memset(&addr, '\0', sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = INADDR_ANY;
+	addr.sin_port = htons(port);
+	if (bind(sfd, (struct sockaddr*) &addr, sizeof(addr)) < 0)
+		return -1;
+
+
+	if (listen(sfd, 0) < 0)
+		return -1;
+
+	return sfd;
+}
+
+User* create_user(int argc, char *argv[])
+{
+	if(argc < 3) {
+		fprintf(stdout, "Usage: chato ALIAS IP PORT\n");
+		return NULL;
+	}
+
+	User* user;
+	user = (User*) malloc(sizeof(User));
+	user->alias = (char*) malloc(strlen(argv[1]) + 1);
+	printf("strlen = %ld\n", strlen(argv[1]));
+	strncpy(user->alias, argv[1], strlen(argv[1]));
+	user->alias[strlen(argv[1])] = '\0';
+	if(inet_pton(AF_INET, argv[2], &user->ip) <= 0) {
+		free(user->alias);
+		free(user);
+		return NULL;
+	}
+
+	errno = 0;
+	char *endptr;
+    user->port = strtoul(argv[3], &endptr, 10);
+    if(errno != 0 || (argv[3] == endptr)) {
+        free(user->alias);
+        free(user);
+        return NULL;
+    }
+
+    return user;
+}
+
 
 int handle_new_connection(PollFds *ptr, struct pollfd *pfds)
 {
