@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,23 +81,25 @@ int rm(PollFds *ptr, struct pollfd *pfds)
 
 int handle_client(PollFds *ptr, struct pollfd *pfds)
 {
+	errno = 0;
     pfds->revents = 0;
     char buf[MAX_STRLEN];
     int ret = read(pfds->fd, buf, sizeof(buf));
     if (ret <= 0) {
-        printf("Client disconnected\n");
-
+    	printf("Client disconnected.\n");
+		rm(ptr, pfds);
         return ret;
     }
 
     buf[ret] = '\0';
-    printf("Client said: %s\n", buf);
+    printf("Client said: %s", buf);
     
     return ret; 
 }
 
 int handle_stdin(PollFds *ptr, struct pollfd *pfds)
 {
+	errno = 0;
     pfds->revents = 0;
     char msg[MAX_STRLEN];
     int ret = 0;
@@ -108,10 +111,10 @@ int handle_stdin(PollFds *ptr, struct pollfd *pfds)
     
     msg[ret] = '\0';
     if (msg[0] == '/') {
-		//TODO: Add collected client IP to PollFds
 		//TODO: Add remove command in order to remove clients
 		if (strncmp("connect ", &msg[1], 8) != 0) {
-			return -1;
+			printf("Failed to convert string to network address.\n");
+			return 0;
 		}; 
 
 		int ip_length = 0;
@@ -128,19 +131,25 @@ int handle_stdin(PollFds *ptr, struct pollfd *pfds)
 		memset((char *) &sa, '\0', sizeof(sa));
 		sa.sin_family = AF_INET;
         if (inet_pton(AF_INET, ip, &(sa.sin_addr)) != 1) {
+			printf("Failed to convert string to network address.\n");
 			return -1;
 		}
 
 		int port_index = ip_index + ip_length + 1;
 		char *endptr;
-		sa.sin_port = strtoul(&(msg[port_index]), &endptr, 10);
+		int port = strtoul(&(msg[port_index]), &endptr, 10);
 		if(errno != 0 || (&(msg[ret - 1]) != endptr)) {
+			printf("Failed to convert the port number. errno = %s\n", strerror(errno));
+			printf("Port = %d\n", sa.sin_port);
 			return -1;
     	}
 
+		sa.sin_port = htons(port);
 		int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-		if(sockfd < 0)
+		if(sockfd < 0) {
+			printf("Failed to open socket.\n");
 			return -1;
+		}
 
 		if (connect(sockfd, (struct sockaddr *) &sa, sizeof(sa)) < 0){
 			printf("Could not connect to %s:%d\n", ip, sa.sin_port);
@@ -148,7 +157,7 @@ int handle_stdin(PollFds *ptr, struct pollfd *pfds)
 		}
 
     	insert(ptr, sockfd, POLLIN, handle_client);
-		printf("Connected to %s:%d\n", ip, sa.sin_port);
+		printf("Connected to %s:%d\n", ip, port);
 
 	} else {
 		printf("%s", msg);
