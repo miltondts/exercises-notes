@@ -36,7 +36,6 @@ PollFds* make_fds(unsigned int size) {
 	ptr->poll_used = 0;
 	ptr->pfds = malloc(size * sizeof(struct pollfd));
 	ptr->handlers = malloc(size * sizeof(void*));
-	printf("size of handle_stdin = %ld\n", sizeof(void*));
 
 	return ptr;
 }
@@ -50,7 +49,6 @@ int insert(PollFds *ptr, int fd, short events, int(*handler)(PollFds *ptr, struc
 	ptr->pfds[ptr->poll_used].events = events;
 	ptr->handlers[ptr->poll_used] = handler;
 	ptr->poll_used++;
-	printf("Inserted. \n");
 
 	return 0;
 }
@@ -103,7 +101,6 @@ int handle_stdin(PollFds *ptr, struct pollfd *pfds)
     pfds->revents = 0;
     char msg[MAX_STRLEN];
     int ret = 0;
-    
     ret = read(pfds->fd, msg, sizeof(msg));
     if (ret < 0) {
 		return ret;
@@ -160,9 +157,18 @@ int handle_stdin(PollFds *ptr, struct pollfd *pfds)
 		printf("Connected to %s:%d\n", ip, port);
 
 	} else {
-		printf("%s", msg);
 		//TODO: handle messages greater than the buffer length
-		//TODO: send messages to clients
+		//FIXME: Replace the 2 with a macro or an enum
+		if (ptr->poll_used > 2) {
+			for (int i = 2; i < ptr->poll_used; i++) {
+				int n = write(ptr->pfds[i].fd, msg, ret);
+				if (n < 0)
+					return -1;
+
+			}
+		} else {
+			printf("%s", msg);
+		}
 	}
 
 	return 0;
@@ -200,7 +206,6 @@ User* create_user(int argc, char *argv[])
 	User* user;
 	user = (User*) malloc(sizeof(User));
 	user->alias = (char*) malloc(strlen(argv[1]) + 1);
-	printf("strlen = %ld\n", strlen(argv[1]));
 	strncpy(user->alias, argv[1], strlen(argv[1]));
 	user->alias[strlen(argv[1])] = '\0';
 	if(inet_pton(AF_INET, argv[2], &user->ip) <= 0) {
