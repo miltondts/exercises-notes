@@ -14,6 +14,7 @@
 
 #define     MAX_CONNECTIONS     8       /* Maximum number of connections */
 #define     MAX_STRLEN          255     /* Maximum string length */
+#define 	MINIMUM_NFD			2		/* Minimum number of file descriptors */
 #define     TIMEOUT             10000   /* Connection timeout in miliseconds*/
 
 typedef struct Users{
@@ -27,6 +28,7 @@ typedef struct PollFds {
     int poll_size;          /*maximum number of file descriptors*/
     int poll_used;          /*number of used file descriptors*/
     int(**handlers)(struct PollFds*, struct pollfd*);   /*poll handler*/
+    int(**error_handler)(int ret);   /*error handler*/
 
 } PollFds;
 
@@ -36,11 +38,18 @@ PollFds* make_fds(unsigned int size) {
 	ptr->poll_used = 0;
 	ptr->pfds = malloc(size * sizeof(struct pollfd));
 	ptr->handlers = malloc(size * sizeof(void*));
+	ptr->error_handler = malloc(size * sizeof(void*));
 
 	return ptr;
 }
 
-int insert(PollFds *ptr, int fd, short events, int(*handler)(PollFds *ptr, struct pollfd*)) {
+int default_error_handler(int ret) 
+{
+	exit(EXIT_FAILURE);
+}
+
+int insert(PollFds *ptr, int fd, short events, int(*handler)(PollFds *ptr,
+			struct pollfd*), int(*error_handler)(int ret)) {
 	if (ptr->poll_used >= ptr->poll_size) {
 		return -1;
 	}
@@ -48,6 +57,7 @@ int insert(PollFds *ptr, int fd, short events, int(*handler)(PollFds *ptr, struc
 	ptr->pfds[ptr->poll_used].fd = fd;
 	ptr->pfds[ptr->poll_used].events = events;
 	ptr->handlers[ptr->poll_used] = handler;
+	ptr->error_handler[ptr->poll_used] = error_handler;
 	ptr->poll_used++;
 
 	return 0;
@@ -136,8 +146,8 @@ int handle_stdin(PollFds *ptr, struct pollfd *pfds)
 		char *endptr;
 		int port = strtoul(&(msg[port_index]), &endptr, 10);
 		if(errno != 0 || (&(msg[ret - 1]) != endptr)) {
-			printf("Failed to convert the port number. errno = %s\n", strerror(errno));
-			printf("Port = %d\n", sa.sin_port);
+			printf("Failed to convert the port number. errno = %s\n", 
+					strerror(errno));
 			return -1;
     	}
 
@@ -153,14 +163,13 @@ int handle_stdin(PollFds *ptr, struct pollfd *pfds)
 			return 0;
 		}
 
-    	insert(ptr, sockfd, POLLIN, handle_client);
+    	insert(ptr, sockfd, POLLIN, handle_client, default_error_handler);
 		printf("Connected to %s:%d\n", ip, port);
 
 	} else {
 		//TODO: handle messages greater than the buffer length
-		//FIXME: Replace the 2 with a macro or an enum
-		if (ptr->poll_used > 2) {
-			for (int i = 2; i < ptr->poll_used; i++) {
+		if (ptr->poll_used > MINIMUM_NFD) {
+			for (int i = MINIMUM_NFD; i < ptr->poll_used; i++) {
 				int n = write(ptr->pfds[i].fd, msg, ret);
 				if (n < 0)
 					return -1;
@@ -240,7 +249,7 @@ int handle_new_connection(PollFds *ptr, struct pollfd *pfds)
         return 0; //TODO: Redefine what to do in case of error
     }
 
-    insert(ptr, cli_sfd, POLLIN, handle_client);
+    insert(ptr, cli_sfd, POLLIN, handle_client, default_error_handler);
     fprintf(stdout, "cli_sfd= %d\n", cli_sfd);
     return 0;
 }
@@ -248,13 +257,14 @@ int handle_new_connection(PollFds *ptr, struct pollfd *pfds)
 int handle_events(PollFds *ptr)
 {
     int ret = poll(ptr->pfds, ptr->poll_used, TIMEOUT);
-
     assert(ret >= 0);
     if (ret != 0) {
+		int handler_ret;
+
         for (int i = 0; i < ptr->poll_used; i++) {
             if (ptr->pfds[i].revents & ptr->pfds[i].events) {
-                if (ptr->handlers[i](ptr, &(ptr->pfds[i])) < 0) {
-                    exit(EXIT_FAILURE);
+                if ((handler_ret = ptr->handlers[i](ptr, &(ptr->pfds[i]))) < 0) {
+					ptr->error_handler[i](ret);
                 }
 
             }
@@ -281,8 +291,8 @@ int main(int argc, char *argv[])
     assert(server_sfd > 0);
 
     PollFds *ptr = make_fds(MAX_CONNECTIONS);
-    insert(ptr, STDIN_FILENO, POLLIN, handle_stdin);
-    insert(ptr, server_sfd, POLLIN, handle_new_connection);
+    insert(ptr, STDIN_FILENO, POLLIN, handle_stdin, default_error_handler);
+    insert(ptr, server_sfd, POLLIN, handle_new_connection, default_error_handler);
     while(handle_events(ptr) >= 0);
     free(user);
 
