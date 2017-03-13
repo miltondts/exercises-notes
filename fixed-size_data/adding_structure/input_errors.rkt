@@ -18,10 +18,7 @@
 ; if v is a number
 (define (checked-area-of-disk v)
   (cond
-    [(number? v)
-     (cond
-       [(positive? v) (area-of-disk v)]
-       [else (error MESSAGE)])]
+    [(and (number? v) (positive? v)) (area-of-disk v)]
     [else (error MESSAGE)]))
 
 ; ------------------------------------------------------------------------------
@@ -42,11 +39,8 @@
 ; instantiates a struct of type Vec
 (define (checked-make-vec x y)
   (cond
-    [(and (number? x) (number? y))
-       (cond
-         [(and (positive? x) (positive? y))
+    [(and (number? x) (number? y) (positive? x) (positive? y))
           (make-vec x y)]
-         [else (error NOT-POSITIVE)])]
     [else (error NOT-POSITIVE)]))
 
 ; ------------------------------------------------------------------------------
@@ -77,9 +71,7 @@
 ; Any -> Boolean
 ; is a an element of the MissileOrNot collection
 (define (missile-or-not? v)
-  (cond
-    [(or (false? v) (posn? v)) #true]
-    [else #false]))
+    (or (false? v) (posn? v)))
 
 ; ------------------------------------------------------------------------------
 ; Exercise 113
@@ -99,9 +91,7 @@
 ; Any -> Boolean
 ; is a an element of the SIGS collection
 (define (sigs? invaders)
-  (cond
-    [(or (aim? invaders) (fired? invaders)) #true]
-    [else #false]))
+    (or (aim? invaders) (fired? invaders)))
 
 ; A Coordinate is one of: 
 ; – a NegativeNumber 
@@ -114,9 +104,7 @@
 ; Any -> Boolean
 ; is a an element of the Coordinate collection
 (define (coordinate? n)
-  (cond
-    [(or (negative? n) (positive? n) (posn? n)) #true]
-    [else #false]))
+  (or (negative? n) (positive? n) (posn? n)))
 
 ; A VAnimal is either
 ; – a VCat
@@ -125,6 +113,4 @@
 ; Any -> Boolean
 ; is a an element of the VAnimal collection
 (define (vanimal? animal)
-  (cond
-    [(or (vcat? animal) (vcham? animal)) #true]
-    [else #false]))
+  (or (vcat? animal) (vcham? animal)))
