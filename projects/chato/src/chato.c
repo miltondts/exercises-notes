@@ -45,7 +45,7 @@ PollFds* make_fds(unsigned int size) {
 
 int default_error_handler(int ret) 
 {
-	exit(EXIT_FAILURE);
+	return -1;
 }
 
 int insert(PollFds *ptr, int fd, short events, int(*handler)(PollFds *ptr,
@@ -118,53 +118,60 @@ int handle_stdin(PollFds *ptr, struct pollfd *pfds)
     
     msg[ret] = '\0';
     if (msg[0] == '/') {
-		//TODO: Add remove command in order to remove clients
-		if (strncmp("connect ", &msg[1], 8) != 0) {
-			printf("Failed to convert string to network address.\n");
+		if (strncmp("connect ", &msg[1], 8) == 0) {
+			int ip_length = 0;
+			int ip_index = 9;
+			while (msg[ip_length + ip_index] != ' ') {
+				ip_length ++;
+			}
+
+			char ip[ip_length + 1];
+			memcpy(ip, &msg[ip_index], ip_length + 1);
+			ip[ip_length] = '\0';
+
+			struct sockaddr_in sa;
+			memset((char *) &sa, '\0', sizeof(sa));
+			sa.sin_family = AF_INET;
+			if (inet_pton(AF_INET, ip, &(sa.sin_addr)) != 1) {
+				printf("Failed to convert string to network address.\n");
+				return -1;
+			}
+
+			int port_index = ip_index + ip_length + 1;
+			char *endptr;
+			int port = strtoul(&(msg[port_index]), &endptr, 10);
+			if(errno != 0 || (&(msg[ret - 1]) != endptr)) {
+				printf("Failed to convert the port number. errno = %s\n", 
+						strerror(errno));
+				return -1;
+			}
+
+			sa.sin_port = htons(port);
+			int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+			if(sockfd < 0) {
+				printf("Failed to open socket.\n");
+				return -1;
+			}
+
+			if (connect(sockfd, (struct sockaddr *) &sa, sizeof(sa)) < 0){
+				printf("Could not connect to %s:%d\n", ip, sa.sin_port);
+				return 0;
+			}
+
+			insert(ptr, sockfd, POLLIN, handle_client, default_error_handler);
+			printf("Connected to %s:%d\n", ip, port);
+		} else if (strncmp("remove ", &msg[1], 7) == 0) {
+			if (ptr->poll_used <= MINIMUM_NFD) {
+				printf("There are no client to remove.\n");
+				return 0;
+			} 
+
+			//TODO: Need to remove the clients by name
+		} else {
+			printf("Failed to recognize command: %s", msg);
 			return 0;
 		}; 
 
-		int ip_length = 0;
-		int ip_index = 9;
-		while (msg[ip_length + ip_index] != ' ') {
-			ip_length ++;
-		}
-
-		char ip[ip_length + 1];
-		memcpy(ip, &msg[ip_index], ip_length + 1);
-		ip[ip_length] = '\0';
-
-		struct sockaddr_in sa;
-		memset((char *) &sa, '\0', sizeof(sa));
-		sa.sin_family = AF_INET;
-        if (inet_pton(AF_INET, ip, &(sa.sin_addr)) != 1) {
-			printf("Failed to convert string to network address.\n");
-			return -1;
-		}
-
-		int port_index = ip_index + ip_length + 1;
-		char *endptr;
-		int port = strtoul(&(msg[port_index]), &endptr, 10);
-		if(errno != 0 || (&(msg[ret - 1]) != endptr)) {
-			printf("Failed to convert the port number. errno = %s\n", 
-					strerror(errno));
-			return -1;
-    	}
-
-		sa.sin_port = htons(port);
-		int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-		if(sockfd < 0) {
-			printf("Failed to open socket.\n");
-			return -1;
-		}
-
-		if (connect(sockfd, (struct sockaddr *) &sa, sizeof(sa)) < 0){
-			printf("Could not connect to %s:%d\n", ip, sa.sin_port);
-			return 0;
-		}
-
-    	insert(ptr, sockfd, POLLIN, handle_client, default_error_handler);
-		printf("Connected to %s:%d\n", ip, port);
 
 	} else {
 		//TODO: handle messages greater than the buffer length
@@ -235,6 +242,26 @@ User* create_user(int argc, char *argv[])
     return user;
 }
 
+int handle_new_connection_error(int ret)
+{
+	if (errno) {
+		switch (errno) {
+			case ENETDOWN:
+				fprintf(stderr, "Error: Network is down.\n");
+				return 0;
+			case EINVAL:
+				fprintf(stderr, "Error:  Socket is not listening for connections, or addrlen is invalid.\n");
+				return 0;
+			case EPERM:
+				fprintf(stderr, "Error: Firewall rules forbid connection.\n");
+				return 0;
+			default: 
+				return 0;
+		}
+	}
+
+	return 0;
+}
 
 int handle_new_connection(PollFds *ptr, struct pollfd *pfds)
 {
@@ -246,11 +273,11 @@ int handle_new_connection(PollFds *ptr, struct pollfd *pfds)
     int cli_sfd = accept(pfds->fd, &cli_addr, &cli_len);
     if (cli_sfd < 0) {
         fprintf(stderr, "Failed to accept. errno: %s\n", strerror(errno));
-        return 0; //TODO: Redefine what to do in case of error
+        return -1; 
     }
 
     insert(ptr, cli_sfd, POLLIN, handle_client, default_error_handler);
-    fprintf(stdout, "cli_sfd= %d\n", cli_sfd);
+
     return 0;
 }
 
@@ -264,7 +291,8 @@ int handle_events(PollFds *ptr)
         for (int i = 0; i < ptr->poll_used; i++) {
             if (ptr->pfds[i].revents & ptr->pfds[i].events) {
                 if ((handler_ret = ptr->handlers[i](ptr, &(ptr->pfds[i]))) < 0) {
-					ptr->error_handler[i](ret);
+					if (ptr->error_handler[i](ret) < -1)
+						exit(EXIT_FAILURE);
                 }
 
             }
@@ -292,7 +320,7 @@ int main(int argc, char *argv[])
 
     PollFds *ptr = make_fds(MAX_CONNECTIONS);
     insert(ptr, STDIN_FILENO, POLLIN, handle_stdin, default_error_handler);
-    insert(ptr, server_sfd, POLLIN, handle_new_connection, default_error_handler);
+    insert(ptr, server_sfd, POLLIN, handle_new_connection, handle_new_connection_error);
     while(handle_events(ptr) >= 0);
     free(user);
 
