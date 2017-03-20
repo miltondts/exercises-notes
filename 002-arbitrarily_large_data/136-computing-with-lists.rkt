@@ -25,8 +25,8 @@
 ; ConsOrEmpty -> Any
 ; extracts the right part of a given pair
 (define (our-rest a-list)
-  (if (empty? (pair-right a-list))
-      (pair-left a-list)
+  (if (empty? a-list)
+      (error 'our-rest "...")
       (pair-right a-list)))
 
 (our-first (our-cons "a" '()))
