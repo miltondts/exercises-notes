@@ -18,6 +18,7 @@
 (define ex2 (cons #true (cons #false '())))
 (define ex3 (cons #true (cons #false (cons #true '()))))
 (define ex4 '())
+(define ex5 (cons #false (cons #false '())))
 
 ; 4) Write the template
 ;(define (all-true lob)
@@ -35,4 +36,19 @@
 (check-expect (all-true ex1) #true)
 (check-expect (all-true ex2) #false)
 (check-expect (all-true ex3) #false)
-; (check-expect (all-true ex4) #false) => This edge-case is not correct. I need to redesign the function
+;(check-expect (all-true ex4) #false)
+(check-expect (all-true ex5) #false)
+
+; ------------------------------------------------------------------------------
+(check-expect (one-true ex1) #true)
+(check-expect (one-true ex2) #true)
+(check-expect (one-true ex3) #true)
+(check-expect (one-true ex4) #false)
+(check-expect (one-true ex5) #false)
+
+; List-of-boolean -> Boolean
+; determines whether at least one item in a list is true
+(define (one-true lob)
+  (cond
+    [(empty? lob) #false]
+    [else (or (first lob) (one-true (rest lob)))]))
