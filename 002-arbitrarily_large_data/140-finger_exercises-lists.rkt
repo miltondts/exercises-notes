@@ -36,7 +36,7 @@
 (check-expect (all-true ex1) #true)
 (check-expect (all-true ex2) #false)
 (check-expect (all-true ex3) #false)
-;(check-expect (all-true ex4) #false)
+;(check-expect (all-true ex4) #false) => Still couldn't find the solution. The result must have information on the current state of the recursion only, it should not take under account the empty list
 (check-expect (all-true ex5) #false)
 
 ; ------------------------------------------------------------------------------
