@@ -8,7 +8,7 @@ chato: $(OBJS)
 	$(CC) $(OBJS) -o $@
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@ -Wall -g
 
 clean:
 	@rm $(APP) $(OBJS)

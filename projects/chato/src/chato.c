@@ -19,21 +19,23 @@
 
 typedef struct Users{
     char *alias;
-    uint32_t ip;
+    uint64_t ip;
     uint16_t port;
 } User;
 
 typedef struct PollFds {
     struct pollfd *pfds;    /*array of pollfd*/
+	User **users; 			/* user information */
     int poll_size;          /*maximum number of file descriptors*/
     int poll_used;          /*number of used file descriptors*/
-    int(**handlers)(struct PollFds*, struct pollfd*);   /*poll handler*/
+    int(**handlers)(struct PollFds*, int);   /*poll handler*/
     int(**error_handler)(int ret);   /*error handler*/
 
 } PollFds;
 
 PollFds* make_fds(unsigned int size) {
 	PollFds *ptr = malloc(sizeof(PollFds));
+	ptr->users = malloc(size * sizeof(User*));
 	ptr->poll_size = size;
 	ptr->poll_used = 0;
 	ptr->pfds = malloc(size * sizeof(struct pollfd));
@@ -49,13 +51,14 @@ int default_error_handler(int ret)
 }
 
 int insert(PollFds *ptr, int fd, short events, int(*handler)(PollFds *ptr,
-			struct pollfd*), int(*error_handler)(int ret)) {
+			int i), int(*error_handler)(int ret), User *user) {
 	if (ptr->poll_used >= ptr->poll_size) {
 		return -1;
 	}
 
 	ptr->pfds[ptr->poll_used].fd = fd;
 	ptr->pfds[ptr->poll_used].events = events;
+	ptr->users[ptr->poll_used] = user;
 	ptr->handlers[ptr->poll_used] = handler;
 	ptr->error_handler[ptr->poll_used] = error_handler;
 	ptr->poll_used++;
@@ -87,8 +90,10 @@ int rm(PollFds *ptr, struct pollfd *pfds)
 	return 0;
 }
 
-int handle_client(PollFds *ptr, struct pollfd *pfds)
+int handle_client(PollFds *ptr, int i)
 {
+	struct pollfd *pfds = &(ptr->pfds[i]);
+
 	errno = 0;
     pfds->revents = 0;
     char buf[MAX_STRLEN];
@@ -100,13 +105,23 @@ int handle_client(PollFds *ptr, struct pollfd *pfds)
     }
 
     buf[ret] = '\0';
-    printf("Client said: %s", buf);
+	
+	if (strncmp(buf, "/alias ", strlen("/alias ")) == 0) {
+		ptr->users[i]->alias = (char*) malloc(sizeof(char) * ret);
+		if (strcpy(ptr->users[i]->alias, buf + strlen("/alias ")) == NULL)
+			return -1;
+
+		return 0;
+	};
+
+    printf("%s said: %s", ptr->users[i]->alias, buf);
     
     return ret; 
 }
 
-int handle_stdin(PollFds *ptr, struct pollfd *pfds)
+int handle_stdin(PollFds *ptr, int i)
 {
+	struct pollfd *pfds = &(ptr->pfds[i]);
 	errno = 0;
     pfds->revents = 0;
     char msg[MAX_STRLEN];
@@ -158,7 +173,17 @@ int handle_stdin(PollFds *ptr, struct pollfd *pfds)
 				return 0;
 			}
 
-			insert(ptr, sockfd, POLLIN, handle_client, default_error_handler);
+			char dest[MAX_STRLEN];
+			dest[0] = '\0';
+			strcat(dest, "/alias ");
+			strcat(dest, ptr->users[i]->alias);
+			if (write(sockfd, dest, strlen(dest)) < 0) 
+				return -1;
+
+			User *new_user = (User *) malloc(sizeof(User));
+			new_user->ip = sa.sin_addr.s_addr;
+			new_user->port = sa.sin_port;
+			insert(ptr, sockfd, POLLIN, handle_client, default_error_handler, new_user);
 			printf("Connected to %s:%d\n", ip, port);
 		} else if (strncmp("remove ", &msg[1], 7) == 0) {
 			if (ptr->poll_used <= MINIMUM_NFD) {
@@ -221,7 +246,7 @@ User* create_user(int argc, char *argv[])
 
 	User* user;
 	user = (User*) malloc(sizeof(User));
-	user->alias = (char*) malloc(strlen(argv[1]) + 1);
+	user->alias = (char*) malloc((strlen(argv[1]) + 1)*sizeof(char));
 	strncpy(user->alias, argv[1], strlen(argv[1]));
 	user->alias[strlen(argv[1])] = '\0';
 	if(inet_pton(AF_INET, argv[2], &user->ip) <= 0) {
@@ -263,8 +288,9 @@ int handle_new_connection_error(int ret)
 	return 0;
 }
 
-int handle_new_connection(PollFds *ptr, struct pollfd *pfds)
+int handle_new_connection(PollFds *ptr, int i)
 {
+	struct pollfd *pfds = &(ptr->pfds[i]);
     pfds->revents = 0;
     struct sockaddr cli_addr;
     socklen_t cli_len;
@@ -276,7 +302,18 @@ int handle_new_connection(PollFds *ptr, struct pollfd *pfds)
         return -1; 
     }
 
-    insert(ptr, cli_sfd, POLLIN, handle_client, default_error_handler);
+	struct sockaddr_in *cli_addr_in = (struct sockaddr_in*) &cli_addr;
+
+	User *user = (User *) malloc(sizeof(User));
+	user->port = cli_addr_in->sin_port;
+	user->ip = cli_addr_in->sin_addr.s_addr;
+    insert(ptr, cli_sfd, POLLIN, handle_client, default_error_handler, user);
+	char dest[MAX_STRLEN];
+	dest[0] = '\0';
+	strcat(dest, "/alias ");
+	strcat(dest, ptr->users[i]->alias);
+	if (write(cli_sfd, dest, strlen(dest)) < 0) 
+		return -1;
 
     return 0;
 }
@@ -290,7 +327,7 @@ int handle_events(PollFds *ptr)
 
         for (int i = 0; i < ptr->poll_used; i++) {
             if (ptr->pfds[i].revents & ptr->pfds[i].events) {
-                if ((handler_ret = ptr->handlers[i](ptr, &(ptr->pfds[i]))) < 0) {
+                if ((handler_ret = ptr->handlers[i](ptr, i)) < 0) {
 					if (ptr->error_handler[i](ret) < -1)
 						exit(EXIT_FAILURE);
                 }
@@ -304,9 +341,8 @@ int handle_events(PollFds *ptr)
 
 int main(int argc, char *argv[])
 {
-    User* user;
 
-    user = create_user(argc, argv);
+    User *user = create_user(argc, argv);
     assert(user != NULL);
 
     char str[INET_ADDRSTRLEN];
@@ -319,8 +355,8 @@ int main(int argc, char *argv[])
     assert(server_sfd > 0);
 
     PollFds *ptr = make_fds(MAX_CONNECTIONS);
-    insert(ptr, STDIN_FILENO, POLLIN, handle_stdin, default_error_handler);
-    insert(ptr, server_sfd, POLLIN, handle_new_connection, handle_new_connection_error);
+    insert(ptr, STDIN_FILENO, POLLIN, handle_stdin, default_error_handler, user);
+    insert(ptr, server_sfd, POLLIN, handle_new_connection, handle_new_connection_error, user);
     while(handle_events(ptr) >= 0);
     free(user);
 
