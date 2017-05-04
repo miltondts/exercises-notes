@@ -25,9 +25,10 @@
 (define (iterative b n)
   (iterative-expt 1 b n))
 
-; TODO: REVIEW:
+; FIXME: Still not working
 (define (iterative-expt a b n)
   (cond
     ((= n 0) a)
-;    ((even? n) (iterative-expt ... ... ...))
+    ((= n 2) (* a (square b)))
+    ((even? n) (iterative-expt (* a (square b)) b (/ n 2)))
     (else (iterative-expt (* a b) b (- n 1)))))
