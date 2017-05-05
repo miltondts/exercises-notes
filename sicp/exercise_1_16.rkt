@@ -29,6 +29,5 @@
 (define (iterative-expt a b n)
   (cond
     ((= n 0) a)
-    ((= n 2) (* a (square b)))
-    ((even? n) (iterative-expt (square (* a  b)) b (/ n 2)))
+    ((even? n) (iterative-expt a (square b) (/ n 2)))
     (else (iterative-expt (* a b) b (- n 1)))))
