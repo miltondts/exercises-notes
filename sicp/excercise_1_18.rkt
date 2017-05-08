@@ -16,7 +16,10 @@
 (define (halve a)
   (/ a 2))
 
+(define (mult-iter product a b)
+  (cond ((= b 0) product)
+        ((even? b) (mult-iter product (double a) (halve b)))
+        (else (mult-iter (+ a product) a (- b 1)))))
+
 (define (fast-mult a b)
-  (cond ((= b 0) 0)
-        ((even? b) (fast-mult (double a) (halve b)))
-        (else (+ a (fast-mult a (- b 1))))))
+  (mult-iter 0 a b))
