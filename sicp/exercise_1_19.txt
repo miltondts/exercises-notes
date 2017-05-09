@@ -1,0 +1,16 @@
+Playing around with the transformations
+
+T = T01
+a <- a + b
+b <- a
+
+Tpq
+a <- bq + aq + ap
+b <- bp + aq
+
+Applying the transformation twice
+a <- bq + aq + ap <-  a*p^2 + 2*a*q^2 + 2*a*p*q + 2*b*q + bq^2 
+b <- bp + aq <- 2*a*q^2 + b*q^2 + 2*a*p*q 
+
+a <- aq + q(p + q)^2 + b(q^2 + pq)
+b <- a(q^2 + 2pq) + b(p - q)^2
