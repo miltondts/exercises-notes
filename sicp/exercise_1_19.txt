@@ -9,8 +9,20 @@ a <- bq + aq + ap
 b <- bp + aq
 
 Applying the transformation twice
-a <- bq + aq + ap <-  a*p^2 + 2*a*q^2 + 2*a*p*q + 2*b*q + bq^2 
-b <- bp + aq <- 2*a*q^2 + b*q^2 + 2*a*p*q 
+a <- bq + aq + ap 
+   <- (bp + aq)*q + (bq + aq + ap)*q + (bq + aq +ap)*p
+   <- b*p*q + a*q^2 + b*q^2 + a*q^2 + a*p*q + b*q*p + a*q*p + a*p^2
+   <- a*q^2 + a*q^2 + a*p^2 + a*p*q + a*q*p + b*q^2 + b*q*p + b*p*q
+   <- 2*a*q^2 + a*p^2 + 2*a*q*p + b*q^2 + 2*b*q*p
+   <- b*q^2 + 2*b*q*p + a*q^2 + 2*a*q*p + a*q^2 + a*p^2
+   <-b*(q^2 + 2*p*q) + a*(q^2 + 2*q*p) + a*(p^2 + q^2)
+  
 
-a <- aq + q(p + q)^2 + b(q^2 + pq)
-b <- a(q^2 + 2pq) + b(p - q)^2
+b <- bp + aq
+   <- (bp + aq)*p + (bq + aq + ap)*q
+   <- b*p^2 + a*q*p + b*q^2 + a*q^2 + a*q*p
+   <- b*p^2 + b*q^2 + a*q^2 + 2*a*q*p
+   <- b*(p^2 + q^2) + a*(q^2 + 2*q*p)
+
+q’ = q^2 + 2*q*p
+p’ = (p^2 + q^2)
