@@ -1,5 +1,7 @@
 #lang scheme
 
+(define (runtime) (current-milliseconds))
+
 (define (square x)
   (* x x))
 
@@ -23,11 +25,12 @@
 
 (define (start-prime-test n start-time)
   (if (prime? n)
-      (report-prime (- (runtime) start-time))))
+      (report-prime (- (runtime) start-time))
+      #f))
 
 (define (report-prime elapsed-time)
   (display " *** ")
   (display elapsed-time))
 
-; TODO: Check why runtime is not working in drRacket
-; TODO: Finish exercise
+;TODO: search for prime
+
