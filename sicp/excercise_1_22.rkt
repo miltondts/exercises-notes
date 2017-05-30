@@ -13,7 +13,7 @@
         ((divides? test-divisor n) test-divisor)
         (else (find-divisor n (+ test-divisor 1)))))
 
-(define (divides? a b) (= (remainder a b) 0))
+(define (divides? a b) (= (remainder b a) 0))
 
 (define (prime? n)
   (= n (smallest-divisor n)))
@@ -32,5 +32,19 @@
   (display " *** ")
   (display elapsed-time))
 
-;TODO: search for prime
+; Number Number -> "display"
+; Print the three smallest prime numbers larger than n, and the
+; ellapsed time to calculate them
+(define (search-for-primes n count)
+  (cond
+    ((= count 0) (display "\nfinished"))
+    ((prime? n) (timed-prime-test n) (search-for-primes (+ n 1) (- count 1)))
+    (else (search-for-primes (+ n 1) count))))
+
+(search-for-primes 1000 3)
+(search-for-primes 10000 3)
+(search-for-primes 100000 3)
+(search-for-primes 1000000 3)
+
+
 
