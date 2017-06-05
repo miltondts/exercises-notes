@@ -84,3 +84,14 @@
 
 ; The ratio is closer to 1.67 than to 2
 
+; First attempt to explain the ratio difference:
+; Given the computer undergoes scheduling of processes, other higher priority
+; processes might require computational resources used by this script. If
+; this process sleeps while calculating the values, it will take longer than
+; theoretically expected.
+
+; Also, given we are undergoing 10000 executions wih each timed-prime-test,
+; any difference in timing in one iteration will be propagated to the other
+; iterations. If it is a 0.1 us drift, and it is constant within iterations,
+; it will mean a divergence of 1 ms in the duration of execution.
+

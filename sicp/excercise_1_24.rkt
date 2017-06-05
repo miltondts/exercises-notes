@@ -1,6 +1,6 @@
 #lang scheme
 
-(define NTIMES 1000)
+(define NTIMES 100)
 (define NEXEC 1000)
 
 (define (runtime) (current-milliseconds))
@@ -78,4 +78,7 @@
 ; (log (/ 1000000 1000)) (i.e ~ 6.9) times larger than near 1000
 ; However, this number does not turn out, regardless of the number of
 ; times (NTIMES) the fermat test is run.
-; This can be explained by ...
+
+; This can be explained because the number of iterations of the Fermat
+; test does not vary with the number that we are verifying. It varies
+; with the number of times we want to run the test.
