@@ -28,3 +28,45 @@
 ; Order of growth of the number of steps? (again from the top of my head)
 ; I'm guessing O(n), where n is the size of the list and we need to add
 ; a new iteration for every extra element of the list
+
+; ------------------------------------------------------------------------------
+
+; Son
+(define es '())
+
+; Number Son -> Son
+; is x in s
+(define (in? x s)
+  (member? x s))
+
+; Number Son.L -> Son.L
+; remove x from s
+(define s1.L
+  (cons 1 (cons 1 '())))
+
+(check-expect (set-.L 1 s1.L) es)
+
+; Number Son -> Son
+; subtract x from s
+(define (set-.L x s)
+  (remove-all x s))
+
+; Number Son.R -> Son.R
+; remove x from s
+(define s1.R
+  (cons 1 '()))
+
+(check-expect
+ (set-.R 1 s1.R) es)
+
+(define (set-.R x s)
+  (remove x s))
+
+
+(define set123 (cons 2 (cons 3 (cons 1'()))))
+(check-satisfied (set-.R 1 set123) not-member-1?)
+
+; Son -> Boolean
+; #true if 1 a member of s, #false otherwise
+(define (not-member-1? s)
+  (not (in? 1 s)))
