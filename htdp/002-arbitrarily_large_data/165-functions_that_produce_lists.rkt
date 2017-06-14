@@ -25,3 +25,22 @@
   (if (empty? lot)
       '()
       (cons (robot? (first lot)) (subst-robot (rest lot)))))
+
+(check-expect (substitute? "blah" "bleh" "blah") "bleh")
+(check-expect (substitute? "blih" "bloh" "bluh") "bluh")
+; String -> String
+; replaces an old string with new
+(define (substitute? old new str)
+  (if (equal? str old)
+      new
+      str))
+
+(check-expect (substitute "Constantinople" "Istambul" (cons "Athens" (cons "Rome" (cons "Constantinople" '()))))
+              (cons "Athens" (cons "Rome" (cons "Istambul" '()))))
+(check-expect (substitute "yo" "mama" '()) '())
+; String String List-of-strings -> List-of-strings
+; substitutes all occurences of old with new
+(define (substitute old new los)
+  (if (empty? los)
+      '()
+      (cons (substitute? old new (first los)) (substitute old new (rest los)))))
