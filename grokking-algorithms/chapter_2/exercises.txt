@@ -1,0 +1,13 @@
+2.1
+We should use lists given they take O(n) time for reading but take O(1) time for inserting and most of the operations that we’ll be performing are insertions.
+
+2.2
+Lets go with lists. Because we’re constantly going to be inserting data into and deleting it from the queue, and lists are better at these operations.
+
+2.3
+Given it needs random access, information should be stored in an array.
+
+2.4
+The downside is that arrays take O(n) (linear time) for inserts and deletions. These operations are slow.
+Every time you add user to the array you need either to shift a bunch of other elements to other indexes or create a new, larger, copy of the array to store all the users + the new one
+

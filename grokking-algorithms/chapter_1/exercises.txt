@@ -1,0 +1,9 @@
+Exercise 1.1
+Sorted list of 128 elements
+log2(128) = 7 steps
+128 => 64 => 32 => 16 => 8 => 4 => 2 => 1
+
+Exercise 1.2
+Sorted list of 256 elements
+log2(256) = 8 steps
+256 => 128 => 64 => 32 => 16 => 8 => 4 => 2 => 1
