@@ -11,3 +11,8 @@ Given it needs random access, information should be stored in an array.
 The downside is that arrays take O(n) (linear time) for inserts and deletions. These operations are slow.
 Every time you add user to the array you need either to shift a bunch of other elements to other indexes or create a new, larger, copy of the array to store all the users + the new one
 
+2.5
+I believe the new data structure (array of lists) would be faster in general because you can use random access to access the required element in the array and, given the array will be fixed to 26 positions, no new insertions seem to be needed to the “rows”.
+Besides, if you have 260000 names, evenly distributed by the 26 slots (so, 10000 elements per index), you end up only having to transverse 1/26 of the elements to insert or remove a new element, and it’s way faster to remove elements from lists (O(1) vs O(n))
+In summary, it’s going to be faster than inserting in and array and than searching in a normal linked list and it is going to be slower than searching in a sorted array and inserting in a linked list but the tradeoff seems to take the best of both worlds.
+
