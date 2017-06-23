@@ -74,6 +74,7 @@ int binary_search(int *array, int num_elements, int item)
 			if (ret < 0)
 				break;
 
+			printf("Binary search: ");
 			print_duration(start, end);
 			return mid;
 		}
@@ -108,23 +109,35 @@ void bubble_sort(int **array, int n)
 	}
 }
 
+void timed_read(int *array, int element)
+{
+	struct timespec start, end;
+	int i;
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	i = array[element];
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	printf("Read:");
+	print_duration(start, end);
+}
+
 int main(int argc, char *argv[])
 {
+	struct node *list;
 	int *array;
 	int n, max, last;
 
 	max = 42;
 
-	for(int n = 10; n < 100000; n = n * 10) {
+	for(n = 10; n < 100000; n = n * 10) {
 		array = generate_random_array(n, max);
 		last = array[n - 1];
 		bubble_sort(&array, n);
 		printf("n = %d\n", n);
 		binary_search(array, n, last);
+		timed_read(array, n - 1);
 		free_s(array);
 	}
-
-	// TODO: Do the same with a linked list
 
 	return 0;
 }
