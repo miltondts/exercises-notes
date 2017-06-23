@@ -3,11 +3,17 @@
 #include <time.h>
 
 #define NELEM(a)	sizeof(a) / sizeof(a[0])
-#define S_TO_NS(s)	(1000000000 * s)
+
+#define free_s(p)							\
+	do {									\
+		if ((p) != NULL) {					\
+			free(p);						\
+			p = NULL;						\
+		}									\
+	} while(0)
 
 void print_array(int *array, int num_elements)
 {
-	printf("Here's an array:\n");
 	for (int i = 0; i < num_elements; i++) {
 		printf("[%d] = %d\n", i, array[i]);
 	}
@@ -17,21 +23,39 @@ void print_duration(struct timespec start, struct timespec end)
 {
 	int duration = 0;
 
-	duration = S_TO_NS(end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec);
+	duration = 1000000000 * (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec);
 	if (duration < 0) {
-		printf("Failed to calculate the time");
+		printf("Failed to calculate the time\n");
 		return;
 	}
 
 	printf("Time spent: %d ns\n", duration);
 }
 
-void generate_random_array(void)
+/**
+ *	@brief	Generate an integer array with n random elements
+ *
+ *	@param[in]	n		Number of elements in the array
+ *	@param[in]	max		Maximum for each element
+ *
+ *	@returns	pointer to the array
+ */
+int *generate_random_array(int n, int max)
 {
-	srand(time(NULL)); // randomize the seed
-	for(int i = 0; i < 10; i++) {
-		printf("[%d] = %d\n", i, rand() % 20);
+	int *ptr;
+
+	ptr = calloc(n, sizeof(int));
+	if (!ptr) {
+		perror("Failed to allocate memory");
+		return NULL;
 	}
+
+	srand(time(NULL)); // randomize the seed
+	for(int i = 0; i < n; i++) {
+		ptr[i] = rand() % max;
+	}
+
+	return ptr;
 }
 
 int binary_search(int *array, int num_elements, int item)
@@ -63,16 +87,43 @@ int binary_search(int *array, int num_elements, int item)
 	return ret;
 }
 
+/*
+ *	@brief	Sort an array of n elements
+ *
+ *	@param[in]	array	Pointer to the array
+ *	@param[in]	n	Number of elements in the array
+ */
+void bubble_sort(int **array, int n)
+{
+	int tmp;
+
+	for (int i = 0; i < n - 1; i++) {
+		for (int j = i; j < n; j++) {
+			if ((*array)[i] > (*array)[j]) {
+				tmp = (*array)[i];
+				(*array)[i] = (*array)[j];
+				(*array)[j] = tmp;
+			}
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {
-	// Array
-	int sorted_array1[] = {1, 2, 3, 5, 8, 12, 20};
+	int *array;
+	int n, max, last;
 
-	print_array(sorted_array1, NELEM(sorted_array1));
-	// TODO: Generate a random array
-	// TODO: Save the last number generated
-	// TODO: Sort the random array
-	// TODO: Print the time spent searching for the last generated number
+	max = 42;
+
+	for(int n = 10; n < 100000; n = n * 10) {
+		array = generate_random_array(n, max);
+		last = array[n - 1];
+		bubble_sort(&array, n);
+		printf("n = %d\n", n);
+		binary_search(array, n, last);
+		free_s(array);
+	}
+
 	// TODO: Do the same with a linked list
 
 	return 0;
