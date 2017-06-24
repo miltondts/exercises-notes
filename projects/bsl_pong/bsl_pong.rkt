@@ -1,6 +1,6 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-beginner-reader.ss" "lang")((modname bsl_pong) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+#reader(lib "htdp-advanced-reader.ss" "lang")((modname bsl_pong) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #t #t none #f () #f)))
 ; BSL PONG
 ; Whishlist:
 ; - a white canvas;
@@ -291,72 +291,79 @@
 
 ; Ball hits player1                                            
 ; Ball hits player2
-                          
+
+
+(define (update-score p)
+  (make-player
+   (make-posn
+    (posn-x (player-pos p))
+    (posn-y (player-pos p)))
+   (+ (player-score p) 1)))
+
+(define (goal? ball)
+  (or (p1-goal? ball) (p2-goal? ball)))
+
+(define (update-player ball p goal?)
+  (if (goal? ball)
+      (update-score p)
+      p))
+
+(define (p1-goal? ball)
+  (> (posn-x (ball-pos ball))
+     (+ FIELD-WIDTH (posn-x (ball-vel ball)))))
+
+(define (p2-goal? ball)
+  (< (posn-x (ball-pos ball))
+     (- 0 (posn-x (ball-vel ball)))))
+
+(define initial-ball
+  (make-ball
+   (make-posn PLAYER-WIDTH 0)
+   BALL-SPEED))
+
+(define (update-ball p)
+   (if (goal? (pong-ball p))
+       initial-ball
+       (make-ball
+        (make-posn
+         (+ (posn-x (ball-pos (pong-ball p))) (posn-x (ball-vel (pong-ball p))))
+         (+ (posn-y (ball-pos (pong-ball p))) (posn-y (ball-vel (pong-ball p)))))
+        (cond
+          [(>= (posn-y (ball-pos (pong-ball p))) (- FIELD-HEIGHT (posn-y (ball-vel (pong-ball p)))))
+           (make-posn
+            (posn-x (ball-vel (pong-ball p)))
+            (* (posn-y (ball-vel (pong-ball p))) -1))]
+          [(<= (posn-y (ball-pos (pong-ball p))) (- 0 (posn-y (ball-vel (pong-ball p)))))
+           (make-posn
+            (posn-x (ball-vel (pong-ball p)))
+            (* (posn-y (ball-vel (pong-ball p))) -1))]
+          [(and
+            (>= (posn-x (ball-pos (pong-ball p))) (- (- FIELD-WIDTH PLAYER-WIDTH) (posn-x (ball-vel (pong-ball p)))))
+            (and
+             (>= (posn-y (ball-pos (pong-ball p))) (- (posn-y (player-pos (pong-p1 p))) (/ PLAYER-HEIGHT 2)))
+             (<= (posn-y (ball-pos (pong-ball p))) (+ (posn-y (player-pos (pong-p1 p))) (/ PLAYER-HEIGHT 2)))))
+           (make-posn
+            (* (posn-x (ball-vel (pong-ball p))) -1)
+            (posn-y (ball-vel (pong-ball p))))]
+          [(and
+            (<= (posn-x (ball-pos (pong-ball p))) (- PLAYER-WIDTH (posn-x (ball-vel (pong-ball p)))))
+            (and
+             (>= (posn-y (ball-pos (pong-ball p))) (- (posn-y (player-pos (pong-p2 p))) (/ PLAYER-HEIGHT 2)))
+             (<= (posn-y (ball-pos (pong-ball p))) (+ (posn-y (player-pos (pong-p2 p))) (/ PLAYER-HEIGHT 2)))))
+           (make-posn
+            (* (posn-x (ball-vel (pong-ball p))) -1)
+            (posn-y (ball-vel (pong-ball p))))]
+          [else (ball-vel (pong-ball p))])
+        )))
+
 ; Pong -> Pong
 ; ball motion and interactions between it, the player cursors, the upper and
 ; lower bounds of the field and the left and right bound of the field
 (define (move-pong-ball p)
   (make-pong
-   (cond
-     [(< (posn-x (ball-pos (pong-ball p))) (- 0 (posn-x (ball-vel (pong-ball p)))))
-      (make-player
-       (make-posn
-        (posn-x (player-pos (pong-p1 p)))
-        (posn-y (player-pos (pong-p1 p))))
-       (+ (player-score (pong-p1 p)) 1))]
-     [else
-     (pong-p1 p)])
-   (cond
-     [(> (posn-x (ball-pos (pong-ball p))) (+ FIELD-WIDTH (posn-x (ball-vel (pong-ball p)))))
-      (make-player
-       (make-posn
-        (posn-x (player-pos (pong-p2 p)))
-        (posn-y (player-pos (pong-p2 p))))
-       (+ (player-score (pong-p2 p)) 1))]
-     [else
-     (pong-p2 p)])
-   (cond
-     [(< (posn-x (ball-pos (pong-ball p))) (- 0 (posn-x (ball-vel (pong-ball p)))))
-      (make-ball
-       (make-posn PLAYER-WIDTH 0)
-       BALL-SPEED)]
-     [(> (posn-x (ball-pos (pong-ball p))) (+ FIELD-WIDTH (posn-x (ball-vel (pong-ball p)))))
-      (make-ball
-       (make-posn PLAYER-WIDTH 0)
-        BALL-SPEED)]
-     [else
-      (make-ball
-       (make-posn
-        (+ (posn-x (ball-pos (pong-ball p))) (posn-x (ball-vel (pong-ball p))))
-        (+ (posn-y (ball-pos (pong-ball p))) (posn-y (ball-vel (pong-ball p)))))
-       (cond
-         [(>= (posn-y (ball-pos (pong-ball p))) (- FIELD-HEIGHT (posn-y (ball-vel (pong-ball p)))))
-          (make-posn
-           (posn-x (ball-vel (pong-ball p)))
-           (* (posn-y (ball-vel (pong-ball p))) -1))]
-         [(<= (posn-y (ball-pos (pong-ball p))) (- 0 (posn-y (ball-vel (pong-ball p)))))
-          (make-posn
-           (posn-x (ball-vel (pong-ball p)))
-           (* (posn-y (ball-vel (pong-ball p))) -1))]
-         [(and
-           (>= (posn-x (ball-pos (pong-ball p))) (- (- FIELD-WIDTH PLAYER-WIDTH) (posn-x (ball-vel (pong-ball p)))))
-           (and
-            (>= (posn-y (ball-pos (pong-ball p))) (- (posn-y (player-pos (pong-p1 p))) (/ PLAYER-HEIGHT 2)))
-            (<= (posn-y (ball-pos (pong-ball p))) (+ (posn-y (player-pos (pong-p1 p))) (/ PLAYER-HEIGHT 2)))))
-          (make-posn
-           (* (posn-x (ball-vel (pong-ball p))) -1)
-           (posn-y (ball-vel (pong-ball p))))]
-         [(and
-           (<= (posn-x (ball-pos (pong-ball p))) (- PLAYER-WIDTH (posn-x (ball-vel (pong-ball p)))))
-           (and
-            (>= (posn-y (ball-pos (pong-ball p))) (- (posn-y (player-pos (pong-p2 p))) (/ PLAYER-HEIGHT 2)))
-            (<= (posn-y (ball-pos (pong-ball p))) (+ (posn-y (player-pos (pong-p2 p))) (/ PLAYER-HEIGHT 2)))))
-          (make-posn
-           (* (posn-x (ball-vel (pong-ball p))) -1)
-           (posn-y (ball-vel (pong-ball p))))]
-         [else (ball-vel (pong-ball p))])
-       )]
-     )))
+   (update-player (pong-ball p) (pong-p1 p) p1-goal?)
+   (update-player (pong-ball p) (pong-p2 p) p2-goal?)
+   (update-ball p)))
 
 (define (move-pong-p1 p ke)
   (make-pong
