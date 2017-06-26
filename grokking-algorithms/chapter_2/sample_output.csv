@@ -1,0 +1,13 @@
+test,number_of_elements,duration
+read,10,68
+insert,10,1634
+delete,10,304
+read,100,58
+insert,100,705
+delete,100,1205
+read,1000,58
+insert,1000,3358
+delete,1000,952
+read,10000,57
+insert,10000,47702
+delete,10000,4173
