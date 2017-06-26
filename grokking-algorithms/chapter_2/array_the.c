@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #define NELEM(a)	sizeof(a) / sizeof(a[0])
@@ -121,6 +122,39 @@ void timed_read(int *array, int element)
 	print_duration(start, end);
 }
 
+int *insert_first_position(int *array, int n, int element)
+{
+	struct timespec start, end;
+	int *new_array;
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	new_array = calloc(n + 1, sizeof(int));
+	new_array[0] = element;
+	memcpy(&(new_array[1]), array, n * sizeof(int));
+	free_s(array);
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	printf("Insert to the first position:");
+	print_duration(start, end);
+
+	return new_array;
+}
+
+int *delete_first_position(int *array, int n)
+{
+	struct timespec start, end;
+	int *new_array;
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	new_array = calloc(n - 1, sizeof(int));
+	memcpy(new_array, &(array[1]), (n - 1) * sizeof(int));
+	free_s(array);
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	printf("Delete from the first position:");
+	print_duration(start, end);
+
+	return new_array;
+}
+
 int main(int argc, char *argv[])
 {
 	struct node *list;
@@ -136,6 +170,8 @@ int main(int argc, char *argv[])
 		printf("n = %d\n", n);
 		binary_search(array, n, last);
 		timed_read(array, n - 1);
+		array = insert_first_position(array, n, rand() % 20);
+		array = delete_first_position(array, n);
 		free_s(array);
 	}
 

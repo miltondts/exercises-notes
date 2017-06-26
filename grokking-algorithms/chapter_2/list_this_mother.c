@@ -104,6 +104,37 @@ void free_list(struct node *my_list)
 	free_s(list);
 }
 
+struct node *insert_first_position(struct node *my_list, int element)
+{
+	struct node *list = NULL;
+	struct timespec start, end;
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	list = malloc(sizeof(struct node));
+	list->element = element;
+	list->next = my_list;
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	printf("Insert to the first position:");
+	print_duration(start, end);
+
+	return list;
+}
+
+struct node *delete_first_position(struct node *my_list)
+{
+	struct timespec start, end;
+	struct node *tmp = NULL;
+
+	clock_gettime(CLOCK_MONOTONIC, &start);
+	tmp = my_list->next;
+	free_s(my_list);
+	clock_gettime(CLOCK_MONOTONIC, &end);
+	printf("Delete from the first position:");
+	print_duration(start, end);
+
+	return tmp;
+}
+
 int main(int argc, char *argv[])
 {
 	struct node *list;
@@ -121,6 +152,8 @@ int main(int argc, char *argv[])
 
 		printf("n = %d\n", n);
 		timed_read(*list, n - 1);
+		list = insert_first_position(list, rand() % 20);
+		list = delete_first_position(list);
 		free_list(list);
 	}
 
