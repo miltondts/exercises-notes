@@ -1,3 +1,5 @@
+//TODO: Rearrange code to return the duration of each operation
+//TODO: Output duration to a CSV file as <operation>, <number_of_elements>, <duration>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -118,6 +120,7 @@ void timed_read(int *array, int element)
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	i = array[element];
 	clock_gettime(CLOCK_MONOTONIC, &end);
+
 	printf("Read:");
 	print_duration(start, end);
 }

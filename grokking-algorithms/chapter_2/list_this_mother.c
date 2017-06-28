@@ -1,3 +1,5 @@
+//TODO: Rearrange code to return the duration of each operation
+//TODO: Output duration to a CSV file as <operation>, <number_of_elements>, <duration>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
