@@ -1,0 +1,15 @@
+Exercise 3.1
+
+From the image, one can know that the first function called was greet(), with the
+input string "maggie", and is the lower part of the stack, and we are currently 
+running the greet2() function with the same input. 
+Once greet2() returns, we'll go back to greet(), and greet2() gets popped off.
+
+
+Exercise 3.2
+
+If my recursive function runs forever it's just going to keep taking more
+and more memory. The computer is going to save information for all the function
+calls.
+That's why some programming language (like Python) throw an error for maximum 
+recursion depth.
