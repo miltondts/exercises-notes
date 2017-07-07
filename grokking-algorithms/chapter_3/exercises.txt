@@ -9,7 +9,7 @@ Once greet2() returns, we'll go back to greet(), and greet2() gets popped off.
 Exercise 3.2
 
 If my recursive function runs forever it's just going to keep taking more
-and more memory. The computer is going to save information for all the function
-calls.
+and more memory. Eventually, it's going to fill the memory that the computer
+allocated for its stack => stack overflow
 That's why some programming language (like Python) throw an error for maximum 
 recursion depth.
