@@ -51,6 +51,8 @@
               (make-player
                (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (- FIELD-HEIGHT (/ PLAYER-HEIGHT 2)))
                0))
+
+
 ; Player KeyEvent -> Player
 ; move player up and down the y axis when the "up" and "down" key's are pressed,
 ; accordingly
@@ -183,53 +185,6 @@
 (define example10 (make-ball (make-posn 2 (- FIELD-HEIGHT 1)) (make-posn 1 1)))
 (define example11 (make-ball (make-posn 2 1) (make-posn 1 -1)))
 
-(check-expect (move-ball example8)
-              (make-ball
-               (make-posn 1 1)
-               (make-posn 1 1)))
-(check-expect (move-ball example9)
-              (make-ball
-               (make-posn 0 0)
-               (make-posn 1 1)))
-(check-expect (move-ball example10)
-              (make-ball
-               (make-posn 3 FIELD-HEIGHT)
-               (make-posn 1 -1)))
-(check-expect (move-ball example11)
-              (make-ball
-               (make-posn 3 0)
-               (make-posn 1 1)))
-; Ball -> Ball
-; move the ball accross the field
-; change y-direction when reaching the upper and lower limits of the field
-; whishlist:
-; - ball should only start moving when space is pressed;
-; - ball should be placed again in the field once it goes out the left
-; and right limits
-(define (move-ball b)
-  (cond
-    [(> (posn-x (ball-pos b)) FIELD-WIDTH)
-     (make-ball
-      (make-posn 0 0)
-      (make-posn 1 1))]
-    [else
-     (make-ball
-      (make-posn
-       (+ (posn-x (ball-pos b)) (posn-x (ball-vel b)))
-       (+ (posn-y (ball-pos b)) (posn-y (ball-vel b))))
-      (cond
-        [(>= (posn-y (ball-pos b)) (- FIELD-HEIGHT (posn-y (ball-vel b))))
-         (make-posn
-          (posn-x (ball-vel b))
-          (* (posn-y (ball-vel b)) -1))]
-        [(<= (posn-y (ball-pos b)) (- 0 (posn-y (ball-vel b))))
-         (make-posn
-          (posn-x (ball-vel b))
-          (* (posn-y (ball-vel b)) -1))]
-        [else (ball-vel b)])
-      )]
-     ))
-
 (check-expect (render-ball example8)
               (place-image BALL 0 0 FIELD))
 ; Ball -> Image
@@ -321,40 +276,53 @@
    (make-posn PLAYER-WIDTH 0)
    BALL-SPEED))
 
+(define (update-ball-pos ball)
+  (make-posn
+         (+ (posn-x (ball-pos ball)) (posn-x (ball-vel ball)))
+         (+ (posn-y (ball-pos ball)) (posn-y (ball-vel ball)))))
+
+(define (update-ball-vel ball p1 p2)
+   (cond
+     [(hit-upper-bound? ball) (reflect-ball-y ball)]
+     [(hit-lower-bound? ball) (reflect-ball-y ball)]
+     [(hit-p1? ball p1) (reflect-ball-x ball)]
+     [(hit-p2? ball p2) (reflect-ball-x ball)]
+     [else (ball-vel ball)]))
+
+(define (hit-upper-bound? ball)
+  (>= (posn-y (ball-pos ball)) (- FIELD-HEIGHT (posn-y (ball-vel ball)))))
+
+(define (hit-lower-bound? ball)
+  (<= (posn-y (ball-pos ball)) (- 0 (posn-y (ball-vel ball)))))
+
+(define (hit-p1? ball p1)
+  (and
+   (>= (posn-x (ball-pos ball)) (- (- FIELD-WIDTH PLAYER-WIDTH) (posn-x (ball-vel ball))))
+   (>= (posn-y (ball-pos ball)) (- (posn-y (player-pos p1)) (/ PLAYER-HEIGHT 2)))
+   (<= (posn-y (ball-pos ball)) (+ (posn-y (player-pos p1)) (/ PLAYER-HEIGHT 2)))))
+
+(define (hit-p2? ball p2)
+  (and
+   (<= (posn-x (ball-pos ball)) (- PLAYER-WIDTH (posn-x (ball-vel ball))))
+   (>= (posn-y (ball-pos ball)) (- (posn-y (player-pos p2)) (/ PLAYER-HEIGHT 2)))
+   (<= (posn-y (ball-pos ball)) (+ (posn-y (player-pos p2)) (/ PLAYER-HEIGHT 2)))))
+
+(define (reflect-ball-y ball)
+  (make-posn
+   (posn-x (ball-vel ball))
+   (* (posn-y (ball-vel ball)) -1)))
+
+(define (reflect-ball-x ball)
+  (make-posn
+   (* (posn-x (ball-vel ball)) -1)
+   (posn-y (ball-vel ball))))
+
 (define (update-ball p)
    (if (goal? (pong-ball p))
        initial-ball
        (make-ball
-        (make-posn
-         (+ (posn-x (ball-pos (pong-ball p))) (posn-x (ball-vel (pong-ball p))))
-         (+ (posn-y (ball-pos (pong-ball p))) (posn-y (ball-vel (pong-ball p)))))
-        (cond
-          [(>= (posn-y (ball-pos (pong-ball p))) (- FIELD-HEIGHT (posn-y (ball-vel (pong-ball p)))))
-           (make-posn
-            (posn-x (ball-vel (pong-ball p)))
-            (* (posn-y (ball-vel (pong-ball p))) -1))]
-          [(<= (posn-y (ball-pos (pong-ball p))) (- 0 (posn-y (ball-vel (pong-ball p)))))
-           (make-posn
-            (posn-x (ball-vel (pong-ball p)))
-            (* (posn-y (ball-vel (pong-ball p))) -1))]
-          [(and
-            (>= (posn-x (ball-pos (pong-ball p))) (- (- FIELD-WIDTH PLAYER-WIDTH) (posn-x (ball-vel (pong-ball p)))))
-            (and
-             (>= (posn-y (ball-pos (pong-ball p))) (- (posn-y (player-pos (pong-p1 p))) (/ PLAYER-HEIGHT 2)))
-             (<= (posn-y (ball-pos (pong-ball p))) (+ (posn-y (player-pos (pong-p1 p))) (/ PLAYER-HEIGHT 2)))))
-           (make-posn
-            (* (posn-x (ball-vel (pong-ball p))) -1)
-            (posn-y (ball-vel (pong-ball p))))]
-          [(and
-            (<= (posn-x (ball-pos (pong-ball p))) (- PLAYER-WIDTH (posn-x (ball-vel (pong-ball p)))))
-            (and
-             (>= (posn-y (ball-pos (pong-ball p))) (- (posn-y (player-pos (pong-p2 p))) (/ PLAYER-HEIGHT 2)))
-             (<= (posn-y (ball-pos (pong-ball p))) (+ (posn-y (player-pos (pong-p2 p))) (/ PLAYER-HEIGHT 2)))))
-           (make-posn
-            (* (posn-x (ball-vel (pong-ball p))) -1)
-            (posn-y (ball-vel (pong-ball p))))]
-          [else (ball-vel (pong-ball p))])
-        )))
+        (update-ball-pos (pong-ball p))
+        (update-ball-vel (pong-ball p) (pong-p1 p) (pong-p2 p)))))
 
 ; Pong -> Pong
 ; ball motion and interactions between it, the player cursors, the upper and
