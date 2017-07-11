@@ -1,0 +1,14 @@
+Assuming consistency as guaranteeing the same output for a given input
+
+5.1
+f(x) = 1 is consistent, but will return the same input for all values
+
+5.2
+f(x) = rand() is not consistent
+
+5.3
+f(x) = next_empty_slot() is not consistent
+
+5.4
+f(x) = len(x) is consistent, but will return the same output for a lot of values
+
