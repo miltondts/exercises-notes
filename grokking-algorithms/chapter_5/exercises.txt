@@ -12,3 +12,26 @@ f(x) = next_empty_slot() is not consistent
 5.4
 f(x) = len(x) is consistent, but will return the same output for a lot of values
 
+5.5
+(k, v) = (name, phone_number) = (variable length string, 9 digit integer)
+A would not do because it always returns 1.
+B would not do because 3 of the items have the same length, this would lead to
+collisions.
+C would not do because several items start with the same letter.
+For D:
+	Esther => (11 + 37 + 39 + 17 + 11 + 35) % 10 = 150 % 10 = 0
+	Ben => (3 + 11 + 29) % 10 = 43 % 10 = 3
+	Bob => (3 + 31 + 3) % 10 = 37 % 10 = 7
+	Dan => (7 + 2 + 29) % 10 = 38 % 10 = 8
+
+No collisions in this case. The load factor is 4 / 10 = 0.4
+
+5.6
+A mapping from battery size to power can be obtained from example B or even
+by D
+
+5.7 
+Here we can use C and D and, if we consider the space when calculating the
+length of the string, we can even use B
+
+
