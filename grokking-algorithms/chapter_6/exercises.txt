@@ -1,0 +1,24 @@
+6.1
+Find the length of the shortest path from start to finish
+
+layer = 1;
+Any direct connection? No
+
+layer = 2
+Any direct connection? yes
+
+There is a path with 2 edges/hops/jumps from start to finish.
+
+6.2
+Shortest path from cab to bat
+
+layer = 1;
+Any connection from cab to bat? Nope
+layer = 2;
+Any direct connection from cab to bat? Yes
+
+There is a path with 2 iterations from cab to bat.
+Golly, and you only have to change 2 letters.
+It's seems there's a connection here, Watson!
+
+
