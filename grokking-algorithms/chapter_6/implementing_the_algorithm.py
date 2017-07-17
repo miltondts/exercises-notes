@@ -14,12 +14,15 @@ def is_mango_seller(name):
     return name[-1] == 'm'
 
 def breadth_first(search_queue):
+    searched = []
     while search_queue:
         person = search_queue.popleft()
-        if is_mango_seller(person):
-            print('{} is a mango seller').format(person)
-        else:
-            search_queue += graph[person]
+        if not person in searched:
+            if is_mango_seller(person):
+                print('{} is a mango seller').format(person)
+            else:
+                search_queue += graph[person]
+                searched.append(person)
     return False
 
 search_queue = deque()

@@ -21,4 +21,19 @@ There is a path with 2 iterations from cab to bat.
 Golly, and you only have to change 2 letters.
 It's seems there's a connection here, Watson!
 
+6.3
+List A is invalid because eating breakfast comes before brushing the teeth.
+List B is valid because eating breakfast comes after brushing teeth.
+List C is invalid because waking up need to always be the first thing
 
+6.4
+Wake up
+Pack lunch
+Exercise
+Shower
+Brush teeth
+Eat breakfast
+Get dressed
+
+6.5
+A and C are trees
