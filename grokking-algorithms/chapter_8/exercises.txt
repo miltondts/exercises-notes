@@ -1,0 +1,36 @@
+8.1
+The greedy algorithm is easy, just pick the biggest box shove it into the 
+container then pick the second biggest box and do the same, and so on until no 
+more boxes fit
+This will probably not get us the optimal solution. It's like a game of tetris,
+you can fit in more boxes if you take into account their relative sizes
+
+
+8.2
+Go and seen the places with highest ranking. You'll probably not see much if 
+you have to travel all around and lose a few days in a plane.
+Again, the way to see more places would be to find the closest ones with highest
+ranking.
+
+8.3
+Quicksort is not greedy. It goes through all the items until all the items are
+sorted and not until they're kind of sorted.
+
+
+8.4
+I don't think that breadth-first is greedy because, besides checking all
+possible cases before presenting a result, the way it chooses the next node
+to process does not influence checking all the nodes and is up to the coder.
+
+8.5
+Dijkstra could be greedy given it takes the path with smallest weight for 
+each iteration but it covers all the cases so it's kind of ambiguous.
+
+8.6
+This is NP complete
+
+8.7
+This is a set covering problem, it's NP complete
+
+8.8
+Yep. NP-complete (Kind of a set-covering problem)
