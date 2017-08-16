@@ -1,0 +1,15 @@
+Regular Expressions
+- Used for text processing, namely for search and/or replace operations.
+- Used to match patterns. Most implementation return only the first match
+but some return a list of matches.
+- Developed as a mathematical concept, it started to be used in UNIX and
+is now common to every programming language.
+
+Used on sed and grep tools.
+GREP -> Global Regular Expression Print
+
+Special characters:
+. -> period -> every character, alphabetic character, digit or period.
+\ -> backlsash -> used to escape metacharacters (i.e. turns special 
+characters into regular characters)
+
