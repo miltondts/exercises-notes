@@ -12,4 +12,25 @@ Special characters:
 . -> period -> every character, alphabetic character, digit or period.
 \ -> backlsash -> used to escape metacharacters (i.e. turns special 
 characters into regular characters)
+[ ] -> open and close brackets -> define a set of characters
+[ - ] -> hifen -> when used inside a set it defines a range, else it
+is a regular character 
+[ ^ ] -> caret -> negates a set (i.e. All but ...) 
+(e.g [^0-9] -> all non-digits)
+\n -> new line
+[\b] -> backspace
+\t -> tab
+\r -> return
+Class metacharacters:
+\d -> digit (same as [0-9]) 
+\w -> Lower and upper case letter, digit or underscore (alphanumeric)
+\s -> whitespace character (except backspace)
+\D -> non-digit
+\W -> non-alphanumeric 
+\S -> non-whitespace
 
+Notes:
+- sets of all letters must be state as [A-Za-z] because the [A-z] matches
+all ASCII characters between Z and a (e.g. [ or ^)
+- fun-fact: \n is a special character because it is escaped and a regular 
+character when not. Usually it's the other way around.
