@@ -21,6 +21,15 @@ is a regular character
 [\b] -> backspace
 \t -> tab
 \r -> return
++ -> plus sign -> one or more characters (functionaly equivalent to {1,})
+* -> asterisk ->  zero or more characters (equivalent to {0,})
+? -> question mark -> zero or one characters (equivalent to {0, 1})
+{ } -> open a close curly braces -> intervals/number of matches 
+	e.g
+	{3} -> match 3 characters
+	{2, 4} -> match a minimum of 2 and maximum of 4 characters 
+ 	{2,} -> match at least 2 characters
+
 Class metacharacters:
 \d -> digit (same as [0-9]) 
 \w -> Lower and upper case letter, digit or underscore (alphanumeric)
@@ -28,6 +37,11 @@ Class metacharacters:
 \D -> non-digit
 \W -> non-alphanumeric 
 \S -> non-whitespace
+
+
+Greedy and lazy quantifiers:
+* and + are greedy and match the most characters they can  <- AVOID THIS
+but *? and +? are lazy and only match the characters they have to
 
 Notes:
 - sets of all letters must be state as [A-Za-z] because the [A-z] matches
