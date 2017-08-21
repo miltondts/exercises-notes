@@ -29,6 +29,8 @@ is a regular character
 	{3} -> match 3 characters
 	{2, 4} -> match a minimum of 2 and maximum of 4 characters 
  	{2,} -> match at least 2 characters
+\b \b-> word boundaries
+^ $ -> string boundaries (just like VIM beggining and end of line)
 
 Class metacharacters:
 \d -> digit (same as [0-9]) 
