@@ -31,6 +31,9 @@ is a regular character
  	{2,} -> match at least 2 characters
 \b \b-> word boundaries
 ^ $ -> string boundaries (just like VIM beggining and end of line)
+( ) -> open and close paranthesis -> subexpressions
+(?= )  -> lookahead
+(?<= ) -> lookbehind
 
 Class metacharacters:
 \d -> digit (same as [0-9]) 
