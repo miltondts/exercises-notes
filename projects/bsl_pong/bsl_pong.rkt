@@ -35,48 +35,30 @@
 (define example2 (make-player (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) 0) 0))
 (define example3 (make-player (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) FIELD-HEIGHT) 0))
 
-(check-expect (move-player1 example1 "up")
-              (make-player
-               (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (- (/ FIELD-HEIGHT 2) PLAYER-SPEED))
-               0))
-(check-expect (move-player1 example1 "down")
-              (make-player
-               (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (+ (/ FIELD-HEIGHT 2) PLAYER-SPEED))
-               0))
-(check-expect (move-player1 example2 "up")
-              (make-player
-               (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (/ PLAYER-HEIGHT 2))
-               0))
-(check-expect (move-player1 example3 "down")
-              (make-player
-               (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (- FIELD-HEIGHT (/ PLAYER-HEIGHT 2)))
-               0))
+(define (imove-player p direction)
+  (make-player
+   (make-posn (posn-x (player-pos p)) (+ (posn-y (player-pos p)) (* direction PLAYER-SPEED)))
+   (player-score p)))
 
+(define (hit-upper-wall? p)
+  (< (posn-y (player-pos p)) (/ PLAYER-HEIGHT 2)))
 
+(define (hit-lower-wall? p)
+  (> (posn-y (player-pos p)) (- FIELD-HEIGHT (/ PLAYER-HEIGHT 2))))
+
+(define (hit-wall? p)
+  (or (hit-upper-wall? p)
+      (hit-lower-wall? p)))
+  
 ; Player KeyEvent -> Player
 ; move player up and down the y axis when the "up" and "down" key's are pressed,
 ; accordingly
-(define (move-player1 p ke)
-  (cond
-    [(> (posn-y (player-pos p)) (- FIELD-HEIGHT (/ PLAYER-HEIGHT 2)))
-     (make-player
-     (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (- FIELD-HEIGHT (/ PLAYER-HEIGHT 2)))
-     (player-score p)) ]
-    [(< (posn-y (player-pos p)) (/ PLAYER-HEIGHT 2))
-     (make-player
-     (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (/ PLAYER-HEIGHT 2))
-     (player-score p))]
-    [(string=? ke "up")
-    (make-player
-     (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (- (posn-y (player-pos p)) PLAYER-SPEED))
-     (player-score p))]
-    [(string=? ke "down")
-    (make-player
-     (make-posn (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (+ (posn-y (player-pos p)) PLAYER-SPEED))
-     (player-score p))]
-    [else p]
-    ))
-
+(define (move-player p direction)
+  (let [(np (imove-player p direction))]
+    (if (hit-wall? np)
+        p
+        np)))
+  
 (check-expect (render-player example1)
               (place-image PLAYER (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (/ FIELD-HEIGHT 2) FIELD))
 ; Player -> Image
@@ -88,47 +70,6 @@
 (define example5 (make-player (make-posn (/ PLAYER-WIDTH 2) 0) 0))
 (define example6 (make-player (make-posn (/ PLAYER-WIDTH 2) FIELD-HEIGHT) 0))
 
-(check-expect (move-player2 example4 "w")
-              (make-player
-               (make-posn (/ PLAYER-WIDTH 2) (- (/ FIELD-HEIGHT 2)  PLAYER-SPEED))
-               0))
-(check-expect (move-player2 example4 "s")
-              (make-player
-               (make-posn (/ PLAYER-WIDTH 2) (+ (/ FIELD-HEIGHT 2)  PLAYER-SPEED))
-               0))
-(check-expect (move-player2 example4 "up") example4)
-(check-expect (move-player2 example5 "w")
-              (make-player
-               (make-posn (/ PLAYER-WIDTH 2) (/ PLAYER-HEIGHT 2))
-               0))
-(check-expect (move-player2 example6 "s")
-              (make-player
-               (make-posn (/ PLAYER-WIDTH 2) (- FIELD-HEIGHT (/ PLAYER-HEIGHT 2)))
-               0))
-
-; Player KeyEvent -> Player
-; move player up and down the y axis when the "w" and "s" key's are pressed,
-(define (move-player2 p ke)
-  (cond
-    [(> (posn-y (player-pos p)) (- FIELD-HEIGHT (/ PLAYER-HEIGHT 2)))
-     (make-player
-     (make-posn (/ PLAYER-WIDTH 2) (- FIELD-HEIGHT (/ PLAYER-HEIGHT 2)))
-     (player-score p)) ]
-    [(< (posn-y (player-pos p)) (/ PLAYER-HEIGHT 2))
-     (make-player
-     (make-posn (/ PLAYER-WIDTH 2) (/ PLAYER-HEIGHT 2))
-     (player-score p))]
-    [(string=? ke "w")
-    (make-player
-     (make-posn (/ PLAYER-WIDTH 2) (- (posn-y (player-pos p)) PLAYER-SPEED))
-     (player-score p))]
-    [(string=? ke "s")
-    (make-player
-     (make-posn (/ PLAYER-WIDTH 2) (+ (posn-y (player-pos p)) PLAYER-SPEED))
-     (player-score p))]
-    [else p]
-    ))
-
 ; ------------------------------------------------------------------------------
 (define-struct both-players [p1 p2])
 ; Both-players is a structure
@@ -137,33 +78,6 @@
 
 (define example7 (make-both-players example1 example4))
 
-(check-expect (move-p1 example7 "up")
-              (make-both-players
-               (move-player1 example1 "up")
-               example4))
-(check-expect (move-p1 example7 "w")
-              (make-both-players
-               example1
-               example4))
-; Both-players Key-Event -> Both-players
-(define (move-p1 p ke)
-  (make-both-players
-   (move-player1 (both-players-p1 p ) ke)
-   (both-players-p2 p)))
-
-(check-expect (move-p2 example7 "up")
-              (make-both-players
-               example1
-               example4))
-(check-expect (move-p2 example7 "w")
-              (make-both-players
-               example1
-               (move-player2 example4 "w")))
-; Both-players KeyEvent -> Both-players
-(define (move-p2 p ke)
-   (make-both-players
-    (both-players-p1 p)
-    (move-player2 (both-players-p2 p) ke)))
 
 (check-expect (render-both-players example7)
               (place-image PLAYER (- FIELD-WIDTH (/ PLAYER-WIDTH 2)) (/ FIELD-HEIGHT 2)
@@ -333,16 +247,26 @@
    (update-player (pong-ball p) (pong-p2 p) p2-goal?)
    (update-ball p)))
 
+(define DIRECTION-UP -1)
+(define DIRECTION-DOWN 1)
+(define DIRECTION-STAY 0)
+
+(define (key->direction ke up-key down-key)
+  (cond
+    [(string=? ke up-key) DIRECTION-UP]
+    [(string=? ke down-key) DIRECTION-DOWN]
+    [else DIRECTION-STAY]))
+
 (define (move-pong-p1 p ke)
   (make-pong
-   (move-player1 (pong-p1 p) ke)
+   (move-player (pong-p1 p) (key->direction ke "up" "down"))
    (pong-p2 p)
    (pong-ball p)))
 
 (define (move-pong-p2 p ke)
   (make-pong
    (pong-p1 p)
-   (move-player2 (pong-p2 p) ke)
+   (move-player (pong-p2 p) (key->direction ke "w" "s"))
    (pong-ball p)))
 
 (define (ponger p)
