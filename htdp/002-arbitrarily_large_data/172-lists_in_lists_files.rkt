@@ -33,3 +33,7 @@
   (if (empty? lls)
       ""
       (string-append (los-to-line (first lls)) (collapse (rest lls)))))
+
+(write-file "ttt.dat"
+            (collapse (read-words/line "ttt.txt")))
+
