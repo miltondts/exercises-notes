@@ -1,0 +1,18 @@
+Basic structure:
+target : prerequisites
+(tab) 	recipe
+
+Variables:
+- CFLAGS ->
+
+Automatic variables:
+- $^ -> list of all prerequisites
+- $@ -> target
+- $< -> first prerequisite
+
+Functions:
+- wildcard
+- pathsubst
+
+Special targets:
+- .PHONY
