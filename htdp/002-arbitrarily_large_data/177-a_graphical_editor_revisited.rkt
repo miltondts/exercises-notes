@@ -48,10 +48,10 @@
     [(empty? l) '()]
     [else (add-at-end (rev (rest l)) (first l))]))
 
-(check-expect (create-editor all good) (make-editor lla good))
+(check-expect (create-editor "all" "good") (make-editor lla good))
 
 ; String String -> Editor
 ; Creates an editor with the first string to the left of the
 ; cursor and the second string to the right of the cursor
 (define (create-editor pre post)
-  (make-editor (rev pre) post))
+  (make-editor (rev (explode pre)) (explode post)))

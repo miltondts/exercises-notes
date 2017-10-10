@@ -13,47 +13,35 @@
 (define MT (empty-scene WIDTH HEIGHT))
 (define CURSOR (rectangle 1 HEIGHT "solid" "red"))
 
-(define-struct editor [pre post])
-; An Editor is a structure:
-;   (make-editor Lo1S Lo1S) 
-; An Lo1S is one of: 
-; – '()
-; – (cons 1String Lo1S)
+(check-expect
+  (editor-text
+   (cons "p" (cons "o" (cons "s" (cons "t" '())))))
+  (text "post" FONT-SIZE FONT-COLOR))
 
-; Lo1s 1String -> Lo1s
-; creates a new list by adding s to the end of l
-(define (add-at-end l s)
+; Lo1s -> String
+; concatenates 1Strings into a string
+(define (cat s)
   (cond
-    [(empty? l) (cons s '())]
+    [(empty? s) ""]
     [else
-     (cons (first l) (add-at-end (rest l) s))]))
-
-; Lo1s -> Lo1s 
-; produces a reverse version of the given list 
-(define (rev l)
-  (cond
-    [(empty? l) '()]
-    [else (add-at-end (rev (rest l)) (first l))]))
-
-; String String -> Editor
-; Creates an editor with the first string to the left of the
-; cursor and the second string to the right of the cursor
-(define (create-editor pre post)
-  (make-editor (rev pre) post))
+     (string-append (first s) (cat (rest s)))]))
 
 ; Lo1s -> Image
 ; renders a list of 1Strings as a text image 
 (define (editor-text s)
-  (text "" FONT-SIZE FONT-COLOR))
+  (text (cat s) FONT-SIZE FONT-COLOR))
 
-(define (editor-render e)
-  (place-image/align
-    (beside (editor-text (editor-pre e))
-            CURSOR
-            (editor-text (editor-post e)))
-    1 1
-    "left" "top"
-    MT))
+(check-expect
+ (editor-text-2
+  (cons "p" (cons "o" (cons "s" (cons "t" '())))))
+ (text "post" FONT-SIZE FONT-COLOR))
 
-(create-editor "pre" "post")
+; Lo1s -> Image
+; renders a list of 1Strings as a text image 
+(define (editor-text-2 s)
+  (cond
+    [(empty? s) ""]
+    [else (beside (text (first s) FONT-SIZE FONT-COLOR) (editor-text (rest s)))]))
+
+
 
