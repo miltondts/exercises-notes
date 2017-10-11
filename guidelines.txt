@@ -1,0 +1,33 @@
+Commit structure:
+htdp: Subsection - exercise number
+<empty line>
+Brief description on what has been done
+
+For example:
+htdp: A graphical editor, revisited - 177:179
+Explored new alternatives to represent data in a graphical editor in order to simplify the design of the program.
+
+Note structure:
+* Never copy. Try always to write notes down in your own words.
+* When possible, write note downs at the end of each subsection
+* 1 Notebook per topic
+* 1 Note per chapter section
+    * Title of the note <Chapter number> <Chapter title> - <Section title>
+
+Code directory structure:
+<book/topic>
+|
+- <chapter>
+    |
+    - <exercise_number>-<subsection_name>.<extension>
+
+Schedule:
+Only study in the morning.
+Monday:
+* Flash review of previous week’s work
+* 20 min work
+Tuesday to Thursday
+* 2 slots of 20 minutes of work
+* 10 minutes to go through mental notes
+Friday:
+* Review week’s work
