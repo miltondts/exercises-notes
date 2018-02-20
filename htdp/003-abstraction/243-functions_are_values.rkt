@@ -1,0 +1,13 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-intermediate-reader.ss" "lang")((modname 243-functions_are_values) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+; Exercise 243
+
+(cons f '())
+; values: f
+
+(f f)
+; values: f and f
+
+(cons f (cons 10 (cons (f 10) '())))
+; values: f 10s
