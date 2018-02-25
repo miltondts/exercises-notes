@@ -51,7 +51,7 @@ def shuffle2(deck):
 def shuffle3(deck):
  	N = len(deck)
 	for i in range(N):
-		swap(deck, i, random.randrange(i, N))
+		swap(deck, i, random.randrange(N))
 
 	return deck
 
