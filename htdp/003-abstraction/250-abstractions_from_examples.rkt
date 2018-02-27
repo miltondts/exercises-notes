@@ -49,5 +49,19 @@
 ;(check-expect (tabulate sqrt 10) (tab-sqrt 22))
 
 ; 4) Get a new signature
-; List-of [Number -> [List-of Numbers]] -> List-of Numbers
+; List-of [Number -> [List-of Numbers]] Number -> List-of Numbers
+
+(check-expect (tab-sqr 2) (list 4 1 0))
+; Number -> List-of Numbers
+; tabulate sqr between n
+; and 0 (incl.) in a list
+(define (tab-sqr n)
+  (tabulate sqr n))
+
+;(check-expect (tab-tan 2) (list (tan 2) (tan 1) 0))
+; Number -> List-of Numbers
+; tabulate tan between n
+; and 0 (incl.) in a list
+(define (tab-tan n)
+  (tabulate tan n))
 
