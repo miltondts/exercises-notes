@@ -31,3 +31,5 @@
 
 (time (inf TEST))
 (time (inf.v2 TEST))
+
+; inf.v2 has a improvement of 10 ms in comparison to inf
