@@ -49,8 +49,7 @@
   (cond
     [(empty? an-inv) '()]
     [else
-     (local
-       ((define the-rest (extract1.v2 (rest an-inv))))
+     (local ((define the-rest (extract1.v2 (rest an-inv))))
      (cond
        [(<= (ir-price (first an-inv)) 1.0)
         (cons (first an-inv) the-rest)]
