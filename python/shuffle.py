@@ -14,10 +14,10 @@ def get_occurences(ndecks, pattern):
 	
 def nshuffle(n, shuffle, deck):
 	t = time.time()
-	decks = []
+	decks = list()
 	for i in range(n):
-		tmp = shuffle(deck[:])
-		decks.append(tuple(tmp))
+		decks.append(tuple(shuffle(deck)))
+
 	elapsed = time.time() - t
 	return decks, elapsed
 
