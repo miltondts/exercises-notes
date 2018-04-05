@@ -1,0 +1,17 @@
+Pythonic:
+
+Set:
+
+List:
+
+Dictionary:
+
+Decorators:
+
+Map:
+
+Filter:
+
+Reduce:
+
+List comprehensions: 
