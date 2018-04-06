@@ -1,3 +1,4 @@
 *.rkt~
-/fixed-size_data/*.txt
+/htdp/.*.txt
+/htdp/002-arbitrarily_large_data/*.dat
 .DS_Store
