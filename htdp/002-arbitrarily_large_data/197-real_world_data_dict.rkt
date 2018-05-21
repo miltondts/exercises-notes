@@ -48,6 +48,10 @@
 (define (most-frequent-2 dict)
   (first (sort-lolc> (count-by-letter dict LETTERS '()))))
 
+(check-expect (sort-lolc> (list (make-letter-counts "e" 1) (make-letter-counts "a" 3)))
+              (list (make-letter-counts "a" 3) (make-letter-counts "e" 1)))
+(check-expect (sort-lolc> (list (make-letter-counts "e" 9) (make-letter-counts "a" 8)))
+              (list (make-letter-counts "e" 9) (make-letter-counts "a" 8)))
 ; List-of-Letter-Counts -> List-of-Letter-Counts
 ; Sort a list of Letter-Counts in descending order
 (define (sort-lolc> lolc)
