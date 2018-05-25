@@ -12,6 +12,7 @@
 (define IR3 (make-ir "Ficciones" 20))
 
 (define LIST-OF-IR (list IR1 IR2 IR3))
+(define LIST-OF-IR1 (list IR2 IR3))
 
 (check-expect (eliminate-exp 10 LIST-OF-IR) (list IR1))
 (check-expect (eliminate-exp 20 LIST-OF-IR) (list IR1))
@@ -21,9 +22,20 @@
 (define (eliminate-exp ua lir)
   (filter (lambda (x) (< (ir-price x) ua)) lir))
 
+(check-expect (recall "Banana" LIST-OF-IR) (list IR2 IR3))
 ; String List-of-IR -> List-of-IR
 ; Produces a list of inventory records that do not use the name ty.
 (define (recall ty lir)
-  (filter (lambda (...) ...) lir))
+  (filter (lambda (x) (not (string=? ty (ir-name x)))) lir))
 
+
+(check-expect (selection LIST-OF-IR LIST-OF-IR1) LIST-OF-IR1)
+(check-expect (selection LIST-OF-IR1 LIST-OF-IR) LIST-OF-IR1)
+; List-of-String List-of-String -> List-of-String
+; Selects all elements of the second list that are also on the first
+(define (selection los1 los2)
+  (filter
+   (lambda (x)
+     (ormap (lambda (y) (string=? (ir-name y) (ir-name x))) los1))
+   los2))
 
